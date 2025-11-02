@@ -1,7 +1,8 @@
 #pragma once
 
 #include <kf/tui.hpp>
-#include <rs/aliases.hpp>
+#include <kf/aliases.hpp>
+
 
 namespace zms {
 
@@ -12,7 +13,7 @@ private:
 
 public:
     explicit HexDisplay(kf::tui::TextStream::Slice v) :
-        view{std::move(v)} {}
+        view{v} {}
 
     void doRender(kf::tui::TextStream &stream) const override {
         for (rs::size i = 0; i < view.len; i += 1) {

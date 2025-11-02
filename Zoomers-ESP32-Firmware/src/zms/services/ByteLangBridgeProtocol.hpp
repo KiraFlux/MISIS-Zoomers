@@ -14,10 +14,10 @@ struct ByteLangBridgeProtocol final {
     /// @brief Результат исполнения инструкции моста
     using BridgeResult = rs::Result<void, BridgeError>;
 
-    /// @brief Специалиизация отправителя
+    /// @brief Специализация отправителя
     using Sender = bytelang::bridge::Sender<rs::u8>;
 
-    /// @brief Специалиизация приёмника
+    /// @brief Специализация приёмника
     using Receiver = bytelang::bridge::Receiver<rs::u8, 1>;
 
 private:
@@ -42,7 +42,7 @@ public:
     explicit ByteLangBridgeProtocol() :
         ByteLangBridgeProtocol{Serial} {}
 
-    /// @brief Прокрутка событий (Обработка входщих инструкций)
+    /// @brief Прокрутка событий (Обработка входящих инструкций)
     void poll() {
         receiver.poll();
     }

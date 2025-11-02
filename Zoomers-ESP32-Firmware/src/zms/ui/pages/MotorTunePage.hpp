@@ -6,6 +6,7 @@
 #include "zms/drivers/Motor.hpp"
 #include "zms/ui/pages/MainPage.hpp"
 
+
 namespace zms {
 
 /// @brief Страница настройки мотора
@@ -31,7 +32,7 @@ struct MotorTunePage final : kf::tui::Page {
 
     using NormalizedInput = kf::tui::Labeled<kf::tui::SpinBox<rs::f32>>;
 
-    /// @brief Ввод нормализованого значения управления мотором
+    /// @brief Ввод нормализованного значения управления мотором
     NormalizedInput normalized_input;
 
     /// @brief Значение управления для установки
@@ -54,14 +55,16 @@ struct MotorTunePage final : kf::tui::Page {
         const char *motor_name,
         Motor &motor,
         Motor::PwmSettings &pwm_settings,
-        Motor::DriverSettings &driver_settings) :
+        Motor::DriverSettings &driver_settings
+    ) :
         Page{motor_name},
 
         set_current_pwm_as_dead_zone{
             "Set DeadZone",
             [this, &pwm_settings]() {
                 pwm_settings.dead_zone = pwm_set;
-            }},
+            }
+        },
 
         init{
             "Re-Init",
@@ -69,22 +72,31 @@ struct MotorTunePage final : kf::tui::Page {
                 if (not motor.init()) {
                     kf_Logger_fatal("motor init failed!");
                 }
-            }},
+            }
+        },
         pwm_input{"PWM", PwmInput::Content{pwm_set}},
         normalized_input{"Norm", NormalizedInput::Content{normalized_value_set, 0.1f}},
         frequency_input{"Hz", FrequencyInput::Content{pwm_settings.ledc_frequency_hz, 1000, FrequencyInput::Content::Mode::ArithmeticPositiveOnly}},
 
-        direction{{{
-                      {"CW", Motor::Direction::CW},
-                      {"CCW", Motor::Direction::CCW},
-                  }},
-                  driver_settings.direction},
+        direction{
+            {
+                {
+                    {"CW", Motor::Direction::CW},
+                    {"CCW", Motor::Direction::CCW},
+                }
+            },
+            driver_settings.direction
+        },
 
-        driver_impl{{{
-                        {"IArduino", Motor::DriverImpl::IArduino},
-                        {"L298N", Motor::DriverImpl::L298nModule},
-                    }},
-                    driver_settings.impl} {
+        driver_impl{
+            {
+                {
+                    {"IArduino", Motor::DriverImpl::IArduino},
+                    {"L298N", Motor::DriverImpl::L298nModule},
+                }
+            },
+            driver_settings.impl
+        } {
         link(MainPage::instance());
 
         add(pwm_input);

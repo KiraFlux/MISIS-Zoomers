@@ -1,18 +1,20 @@
 #pragma once
 
+#include <kf/tools/meta/Singleton.hpp>
+
 #include "zms/Periphery.hpp"
 #include "zms/services/ByteLangBridgeProtocol.hpp"
 #include "zms/services/DualJoystickRemoteController.hpp"
 #include "zms/services/TextUI.hpp"
-#include "zms/tools/Singleton.hpp"
+
 
 namespace zms {
 
 /// @brief Единственная и глобальная точках входа и связывания всех дополнительных сервисов робота
-struct Service final : Singleton<Service> {
+struct Service final : kf::tools::Singleton<Service> {
     friend struct Singleton<Service>;
 
-    /// @brief Менеджер текстового пользоввательского интерфейса
+    /// @brief Менеджер текстового пользовательского интерфейса
     TextUI text_ui{};
 
     /// @brief Удаленный контроллер
@@ -21,9 +23,9 @@ struct Service final : Singleton<Service> {
     /// @brief ByteLang мост
     ByteLangBridgeProtocol bytelang_bridge{};
 
-    /// @brief Инициаоизация сервисов
+    /// @brief Инициализация сервисов
     [[nodiscard]] bool init() {
-        auto &periphery = zms::Periphery::instance();
+        static auto &periphery = zms::Periphery::instance();
 
         periphery.espnow_node.on_receive = [this](const void *data, rs::u8 size) {
             /// Действие в меню
@@ -66,16 +68,29 @@ struct Service final : Singleton<Service> {
         };
 
         dual_joystick_remote_controller.handler = [](const DualJoystickRemoteController::ControlPacket &packet) {
-            kf_Logger_debug(
-                "Packet:"
-                "L(%f\t%f)\t"
-                "R(%f\t%f)\t"
-                "mode %s",
-                packet.left_x,
-                packet.left_y,
-                packet.right_x,
-                packet.right_y,
-                packet.mode);
+//            kf_Logger_debug(
+//                "Packet:"
+//                "L(%f\t%f)\t"
+//                "R(%f\t%f)",
+//                packet.left_x,
+//                packet.left_y,
+//                packet.right_x,
+//                packet.right_y
+//            );
+
+            periphery.left_motor.set(packet.left_y + packet.left_x);
+            periphery.right_motor.set(packet.left_y - packet.left_x);
+        };
+
+        text_ui.send_handler = [](const kf::tui::TextStream::Slice &slice) -> bool {
+            const auto send_result = periphery.espnow_node.send(slice.data, slice.len);
+
+            if (send_result.fail()) {
+                kf_Logger_error("text ui send fail: %s", rs::toString(send_result.error));
+                return false;
+            }
+
+            return true;
         };
 
         return true;

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
+#include <kf/units.hpp>
 
-#include "zms/aliases.hpp"
 
 /// @brief Обработчик прерывания на основной фазе
 static void IRAM_ATTR encoderInterruptHandler(void *);
@@ -13,29 +13,29 @@ namespace zms {
 struct Encoder {
 
     /// @brief Псевдоним типа для положения энкодера в отсчётах (ticks)
-    using Ticks = rs::i32;
+    using Ticks = kf::i32;
 
     /// @brief Настройки преобразований
     struct ConversionSettings {
         /// @brief Сколько отсчётов в одном миллиметре
-        rs::f32 ticks_in_one_mm;
+        kf::f32 ticks_in_one_mm;
 
         /// @brief Перевести из отсчётов в мм
-        [[nodiscard]] Millimeters toMillimeters(Ticks ticks) const { return Millimeters(ticks) / ticks_in_one_mm; }
+        [[nodiscard]] kf::Millimeters toMillimeters(Ticks ticks) const { return kf::Millimeters(ticks) / ticks_in_one_mm; }
 
         /// @brief Перевести из мм в отсчёты
-        [[nodiscard]] Ticks toTicks(Millimeters mm) const { return Ticks(mm * ticks_in_one_mm); }
+        [[nodiscard]] Ticks toTicks(kf::Millimeters mm) const { return Ticks(mm * ticks_in_one_mm); }
     };
 
     /// @brief Настройки пинов
     struct PinsSettings {
         /// @brief Пин основного сигнала (источник прерывания)
-        rs::u8 phase_a;
+        kf::u8 phase_a;
         /// @brief Пин вторичной фазы (для определения направления)
-        rs::u8 phase_b;
+        kf::u8 phase_b;
 
         /// @brief Режим вызова прерывания
-        enum class Edge : rs::u8 {
+        enum class Edge : kf::u8 {
             /// @brief Прерывание по нарастанию (LOW -> HIGH)
             Rising = RISING,
             /// @brief Прерывание по спаду (HIGH -> LOW)
@@ -45,10 +45,10 @@ struct Encoder {
 
     /// @brief Настройки подключения
     const PinsSettings &pins;
-    
+
     /// @brief Настройки преобразования
     const ConversionSettings &conversion;
-    
+
     /// @brief Текущее положение энкодера в отсчётах
     Ticks position{0};
 
@@ -84,10 +84,10 @@ struct Encoder {
     void setPositionTicks(Ticks new_position) { position = new_position; }
 
     /// @brief Положение энкодера в мм
-    [[nodiscard]] inline Millimeters getPositionMillimeters() const { return conversion.toMillimeters(position); }
+    [[nodiscard]] inline kf::Millimeters getPositionMillimeters() const { return conversion.toMillimeters(position); }
 
     /// @brief Установить положение энкодера в мм
-    void setPositionMillimeters(Millimeters new_position) { position = conversion.toTicks(new_position); }
+    void setPositionMillimeters(kf::Millimeters new_position) { position = conversion.toTicks(new_position); }
 };
 
 }// namespace zms

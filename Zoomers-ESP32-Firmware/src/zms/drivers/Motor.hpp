@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 #include <kf/Logger.hpp>
+#include <kf/units.hpp>
 
-#include "zms/aliases.hpp"
 
 namespace zms {
 
@@ -17,7 +17,7 @@ struct Motor {
     enum class Direction : rs::u8 {
         /// @brief Положительное вращение - по часовой
         CW = 0x00,
-        
+
         /// @brief Положительное вращение - против часовой
         CCW = 0x01
     };
@@ -26,7 +26,7 @@ struct Motor {
     enum class DriverImpl : rs::u8 {
         /// @brief Реализация мотор-шилда IArduino
         IArduino = 0x00,
-        
+
         /// @brief Реализация драйвера моторов на H-Мосте L298nModule 
         L298nModule = 0x01,
     };
@@ -69,7 +69,7 @@ struct Motor {
 
         /// @brief Частота ШИМ Гц
         FrequencyScalar ledc_frequency_hz;
-        
+
         /// @brief Мёртвая зона ШИМ
         SignedPwm dead_zone;
 
@@ -122,7 +122,7 @@ public:
         max_pwm = pwm_settings.maxPwm();
         kf_Logger_debug(
             "max_pwm=%d, freq=%d, resolution=%d\n",
-            max_pwm, 
+            max_pwm,
             pwm_settings.ledc_frequency_hz,
             pwm_settings.ledc_resolution_bits);
 
@@ -133,7 +133,7 @@ public:
         switch (driver_settings.impl) {
             case DriverImpl::IArduino: {
                 kf_Logger_debug("IArduino mode");
-                
+
                 const auto current_frequency = ledcSetup(
                     driver_settings.ledc_channel,
                     pwm_settings.ledc_frequency_hz,
@@ -148,14 +148,16 @@ public:
 
                 ledcAttachPin(driver_settings.pin_b, driver_settings.ledc_channel);
                 kf_Logger_debug("LEDC attached to pin");
-            } break;
+            }
+                break;
 
             case DriverImpl::L298nModule: {
                 kf_Logger_debug("L293n mode");
 
                 analogWriteFrequency(pwm_settings.ledc_frequency_hz);
                 analogWriteResolution(pwm_settings.ledc_resolution_bits);
-            } break;
+            }
+                break;
         }
 
         stop();
@@ -180,7 +182,8 @@ public:
             case DriverImpl::IArduino: {
                 digitalWrite(driver_settings.pin_a, matchDirection(pwm));
                 ledcWrite(driver_settings.ledc_channel, std::abs(pwm));
-            } break;
+            }
+                break;
 
             case DriverImpl::L298nModule: {
                 const bool positive_direction = matchDirection(pwm);
@@ -191,7 +194,8 @@ public:
                     analogWrite(driver_settings.pin_a, 0);
                     analogWrite(driver_settings.pin_b, std::abs(pwm));
                 }
-            } break;
+            }
+                break;
         }
     }
 

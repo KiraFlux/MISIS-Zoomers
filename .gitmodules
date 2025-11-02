@@ -7,3 +7,6 @@
 [submodule "Zoomers-ESP32-Firmware/lib/Fresh-EspNow"]
 	path = Zoomers-ESP32-Firmware/lib/Fresh-EspNow
 	url = https://github.com/KiraFlux/Fresh-EspNow
+[submodule "Zoomers-ESP32-Firmware/lib/KiraFlux-ToolBox"]
+	path = Zoomers-ESP32-Firmware/lib/KiraFlux-ToolBox
+	url = https://github.com/KiraFlux/KiraFlux-ToolBox.git

@@ -2,9 +2,8 @@
 
 #include <functional>
 #include <kf/Logger.hpp>
+#include <kf/tools/time/TimeoutManager.hpp>
 
-#include "zms/aliases.hpp"
-#include "zms/tools/TimeoutManager.hpp"
 
 namespace zms {
 
@@ -24,14 +23,11 @@ struct DualJoystickRemoteController {
 
         /// @brief Правый стик, ось Y
         float right_y{0};
-
-        /// @brief Режим
-        bool mode{false};
     };
 
 private:
     /// @brief Менеджер тайм-аута пакета
-    TimeoutManager packet_timeout_manager;
+    kf::tools::TimeoutManager packet_timeout_manager;
 
     /// @brief Флаг отключения
     bool disconnected{true};
@@ -43,7 +39,7 @@ public:
     /// @brief Обработчик входящего пакета
     std::function<void(const ControlPacket &)> handler{nullptr};
 
-    explicit DualJoystickRemoteController(Milliseconds packet_timeout) :
+    explicit DualJoystickRemoteController(kf::Milliseconds packet_timeout) :
         packet_timeout_manager{packet_timeout} {}
 
     /// @brief Прокрутка событий
@@ -56,9 +52,8 @@ public:
                 resetControlPacket();
             }
         } else {
-            if (handler) {
-                handler(packet);
-            }
+            disconnected = false;
+            if (handler) { handler(packet); }
         }
     }
 

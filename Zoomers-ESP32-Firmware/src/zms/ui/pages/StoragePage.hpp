@@ -5,6 +5,7 @@
 #include "zms/Periphery.hpp"
 #include "zms/ui/pages/MainPage.hpp"
 
+
 namespace zms {
 
 /// @brief Страница управления хранилищем настроек
@@ -27,9 +28,10 @@ public:
         load{"Load", [&periphery]() { periphery.storage.load(); }},
         restore_defaults{
             "Restore", [&periphery]() {
-                periphery.storage.settings = periphery.defaultSettings();
+                periphery.storage.settings = Periphery::defaultSettings();
                 periphery.storage.save();
-            }} {
+            }
+        } {
         link(MainPage::instance());
         add(save);
         add(load);

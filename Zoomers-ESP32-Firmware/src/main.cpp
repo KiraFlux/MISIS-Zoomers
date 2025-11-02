@@ -4,18 +4,19 @@
 #include "zms/Periphery.hpp"
 #include "zms/Service.hpp"
 
+
+static auto &periphery = zms::Periphery::instance();
+
+static auto &service = zms::Service::instance();
+
 void setup() {
     Serial.begin(115200);
 
-    kf::Logger::instance().write_func = [](const char *buffer, size_t size) {
-        static auto &bridge = zms::Service::instance().bytelang_bridge;
-        bridge.send_log(buffer, size);
-    };
+    kf_Logger_setWriter([](const char *buffer, size_t size) {
+        service.bytelang_bridge.send_log(buffer, size);
+    });
 
     kf_Logger_info("begin");
-
-    auto &periphery = zms::Periphery::instance();
-    auto &service = zms::Service::instance();
 
     const bool periphery_ok = periphery.init();
     const bool service_ok = service.init();
@@ -31,6 +32,5 @@ void setup() {
 }
 
 void loop() {
-    static auto &service = zms::Service::instance();
     service.poll();
 }

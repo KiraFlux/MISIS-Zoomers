@@ -4,6 +4,7 @@
 #include <kf/Logger.hpp>
 #include <kf/espnow.hpp>
 
+
 namespace zms {
 
 /// @brief Узел Espnow
@@ -64,12 +65,12 @@ public:
     }
 
     /// @brief Отправить пакет данных на пульт
-    template<typename T> inline rs::Result<void, kf::espnow::Error> send(const T &value) {
+    template<typename T> [[nodiscard]] inline rs::Result<void, kf::espnow::Error> send(const T &value) {
         return kf::espnow::Protocol::send(settings.remote_controller_mac, value);
     }
 
     /// @brief Отправить буфер на пульт
-    inline rs::Result<void, kf::espnow::Error> send(const void *data, rs::u8 size) {
+    [[nodiscard]] inline rs::Result<void, kf::espnow::Error> send(const void *data, rs::u8 size) {
         return kf::espnow::Protocol::send(settings.remote_controller_mac, data, size);
     }
 };

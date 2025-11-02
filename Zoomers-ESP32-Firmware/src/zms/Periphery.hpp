@@ -1,12 +1,12 @@
 #pragma once
 
-#include <kf/Storage.hpp>
+#include <kf/tools/Storage.hpp>
+#include <kf/tools/meta/Singleton.hpp>
 
 #include "zms/drivers/Encoder.hpp"
 #include "zms/drivers/EspnowNode.hpp"
 #include "zms/drivers/Motor.hpp"
 #include "zms/drivers/Sharp.hpp"
-#include "zms/tools/Singleton.hpp"
 
 /// @brief MISIS-Zoomers
 namespace zms {
@@ -14,7 +14,7 @@ namespace zms {
 /// @brief Аппаратное обеспечение робота.
 /// Предоставляет доступ к аппаратным модулям робота и их настройкам.
 /// Может быть только единственным
-struct Periphery final : Singleton<Periphery> {
+struct Periphery final : kf::tools::Singleton<Periphery> {
     friend struct Singleton<Periphery>;
 
     /// @brief Настройки аппаратного обеспечения
@@ -24,7 +24,7 @@ struct Periphery final : Singleton<Periphery> {
 
         /// @brief Настройки ШИМ драйвера моторов
         Motor::PwmSettings motor_pwm;
-        
+
         /// @brief Настройки драйверов моторов
         Motor::DriverSettings left_motor, right_motor;
 
@@ -37,7 +37,7 @@ struct Periphery final : Singleton<Periphery> {
         Encoder::PinsSettings left_encoder, right_encoder;
 
         /// @brief ИК датчики расстояния
-        Sharp::Settings left_disnance_sensor, right_disnance_sensor;
+        Sharp::Settings left_distance_sensor, right_distance_sensor;
 
         // Софт
 
@@ -69,10 +69,10 @@ struct Periphery final : Singleton<Periphery> {
     // Датчики расстояния
 
     /// @brief Левый датчик расстояния
-    Sharp left_disnance_sensor{storage.settings.left_disnance_sensor};
+    Sharp left_distance_sensor{storage.settings.left_distance_sensor};
 
     /// @brief Правый датчик расстояния
-    Sharp right_disnance_sensor{storage.settings.right_disnance_sensor};
+    Sharp right_distance_sensor{storage.settings.right_distance_sensor};
 
     // Сеть
 
@@ -92,8 +92,8 @@ struct Periphery final : Singleton<Periphery> {
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }
 
-        if (not left_disnance_sensor.init()) { return false; }
-        if (not right_disnance_sensor.init()) { return false; }
+        if (not left_distance_sensor.init()) { return false; }
+        if (not right_distance_sensor.init()) { return false; }
 
         left_encoder.init();
         right_encoder.init();
@@ -106,24 +106,24 @@ struct Periphery final : Singleton<Periphery> {
         return true;
     }
 
-    /// @brief Получть настройки по умолчанию
+    /// @brief Получить настройки по умолчанию
     /// @return Значения по умолчанию (Из прошивки)
     static const Settings &defaultSettings() {
         static constexpr Settings default_settings{
             .motor_pwm = {
                 .ledc_frequency_hz = 20000,
-                .dead_zone = 300,// Значение получено экспериментально
+                .dead_zone = 580,// Значение получено экспериментально
                 .ledc_resolution_bits = 10,
             },
             .left_motor = {
-                .impl = Motor::DriverImpl::L298nModule,
+                .impl = Motor::DriverImpl::IArduino,
                 .direction = Motor::Direction::CCW,
                 .pin_a = static_cast<rs::u8>(GPIO_NUM_27),
                 .pin_b = static_cast<rs::u8>(GPIO_NUM_21),
                 .ledc_channel = 0,
             },
             .right_motor = {
-                .impl = Motor::DriverImpl::L298nModule,
+                .impl = Motor::DriverImpl::IArduino,
                 .direction = Motor::Direction::CCW,
                 .pin_a = static_cast<rs::u8>(GPIO_NUM_19),
                 .pin_b = static_cast<rs::u8>(GPIO_NUM_18),
@@ -142,17 +142,18 @@ struct Periphery final : Singleton<Periphery> {
                 .phase_b = static_cast<rs::u8>(GPIO_NUM_26),
                 .edge = Encoder::PinsSettings::Edge::Falling,
             },
-            .left_disnance_sensor = {
+            .left_distance_sensor = {
                 .pin = static_cast<rs::u8>(GPIO_NUM_34),
                 .resolution = 10,
             },
-            .right_disnance_sensor = {
+            .right_distance_sensor = {
                 .pin = static_cast<rs::u8>(GPIO_NUM_35),
                 .resolution = 10,
             },
             .espnow_node = {
                 .remote_controller_mac = {0x78, 0x1c, 0x3c, 0xa4, 0x96, 0xdc},
-            }};
+            }
+        };
         return default_settings;
     }
 };

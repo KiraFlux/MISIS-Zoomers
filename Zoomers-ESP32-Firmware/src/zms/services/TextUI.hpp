@@ -59,7 +59,7 @@ public:
     }
 
     /// @brief Опрос событий
-    void poll() {
+    void poll() const {
         auto &page_manager = kf::tui::PageManager::instance();
         const bool update_required = page_manager.pollEvents();
 

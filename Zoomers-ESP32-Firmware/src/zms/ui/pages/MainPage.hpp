@@ -1,13 +1,13 @@
 #pragma once
 
 #include <kf/tui.hpp>
+#include <kf/tools/meta/Singleton.hpp>
 
-#include "zms/tools/Singleton.hpp"
 
 namespace zms {
 
 /// @brief Основная страница
-struct MainPage final : kf::tui::Page, Singleton<MainPage> {
+struct MainPage final : kf::tui::Page, kf::tools::Singleton<MainPage> {
     friend struct Singleton<MainPage>;
 
     explicit MainPage() :

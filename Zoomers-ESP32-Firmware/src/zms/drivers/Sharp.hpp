@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 #include <kf/Logger.hpp>
+#include <kf/units.hpp>
 
-#include "zms/aliases.hpp"
 
 namespace zms {
 
@@ -52,12 +52,12 @@ public:
     }
 
     /// @brief Считать значения датчика в величине АЦП 
-    inline AnalogValue readRaw() const {
+    [[nodiscard]] inline AnalogValue readRaw() const {
         return analogRead(settings.pin);
     }
 
     /// @brief Считать расстояние в миллиметрах
-    Millimeters read() const {
+    [[nodiscard]] kf::Millimeters read() const {
         // 65535 / analogRead(a)
         long sum = 0;
 
@@ -68,7 +68,7 @@ public:
             delay(1);
         }
 
-        return (65535.0F * n) / Millimeters(sum);
+        return (65535.0F * n) / kf::Millimeters(sum);
     }
 };
 
