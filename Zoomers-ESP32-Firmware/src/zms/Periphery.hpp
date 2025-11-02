@@ -7,6 +7,7 @@
 #include "zms/drivers/EspnowNode.hpp"
 #include "zms/drivers/Motor.hpp"
 #include "zms/drivers/Sharp.hpp"
+#include "zms/drivers/Servo.hpp"
 
 /// @brief MISIS-Zoomers
 namespace zms {
@@ -27,6 +28,14 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
 
         /// @brief Настройки драйверов моторов
         Motor::DriverSettings left_motor, right_motor;
+
+        // Servo
+
+        /// @brief Настройки ШИМ сервопривода
+        Servo::PwmSettings servo_pwm;
+
+        /// @brief Настройки сервопривода общего назначения
+        Servo::DriverSettings generic_servo;
 
         // Энкодер
 
@@ -57,6 +66,11 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
 
     /// @brief Правый мотор
     Motor right_motor{storage.settings.right_motor, storage.settings.motor_pwm};
+
+    // Сервоприводы
+
+    /// @brief Сервопривод общего назначения
+    Servo generic_servo{storage.settings.generic_servo, storage.settings.servo_pwm};
 
     // Энкодеры
 
@@ -91,6 +105,8 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
 
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }
+
+//        if (not generic_servo.init()) { return false; }
 
         if (not left_distance_sensor.init()) { return false; }
         if (not right_distance_sensor.init()) { return false; }
@@ -128,6 +144,19 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                 .pin_a = static_cast<rs::u8>(GPIO_NUM_19),
                 .pin_b = static_cast<rs::u8>(GPIO_NUM_18),
                 .ledc_channel = 1,
+            },
+            .servo_pwm = {
+                .ledc_frequency_hz = 50,
+                .ledc_resolution_bits = 16,
+            },
+            .generic_servo = {
+                .signal_pin = 15,
+                .ledc_channel = 2,
+                .direction = Servo::Direction::CW,
+                .min_angle = 0,
+                .max_angle = 180,
+                .min_pulse_us = 500,
+                .max_pulse_us = 2400,
             },
             .encoder_conversion = {
                 .ticks_in_one_mm = (5000.0f / 2100.0f),

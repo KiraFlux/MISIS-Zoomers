@@ -80,6 +80,8 @@ struct Service final : kf::tools::Singleton<Service> {
 
             periphery.left_motor.set(packet.left_y + packet.left_x);
             periphery.right_motor.set(packet.left_y - packet.left_x);
+
+            periphery.generic_servo.setAngle(kf::u16(180.0f * (packet.right_y * 0.5f + 0.5f)));
         };
 
         text_ui.send_handler = [](const kf::tui::TextStream::Slice &slice) -> bool {
