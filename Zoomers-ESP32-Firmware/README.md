@@ -1,4 +1,4 @@
-# RtkBot ESP32 Firmware
+# Zoomers ESP32 Firmware
 
 - Прошивка для контроллера нижнего уровня
 - Проект PlatformIO
@@ -17,8 +17,8 @@
 | Энкодер Правый Фаза-B            | 26   |
 | Analog 0                         | 34   |
 | Analog 1                         | 35   |
-| Servo 0                          | 14   |
-| Servo 1                          | 15   |
+| Servo 0 (Звено 0)                | 14   |
+| Servo 1 (Захват)                 | 15   |
 
 <!--                            | UART 2 RX | 16    -->
 <!--                            | UART 2 TX | 17    -->

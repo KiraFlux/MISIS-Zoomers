@@ -12,6 +12,8 @@
 #include "zms/ui/pages/MotorPwmSettingsPage.hpp"
 #include "zms/ui/pages/MotorTunePage.hpp"
 #include "zms/ui/pages/StoragePage.hpp"
+#include "zms/ui/pages/ServoTunePage.hpp"
+
 
 namespace zms {
 
@@ -45,6 +47,11 @@ private:
 
     /// @brief Страница настройки узла Espnow
     EspnowNodeSettingsPage espnow_node_settings_page;
+
+    //
+
+    /// @brief Страница настройки сервопривода
+    ServoTunePage claw_servo_tune_page, arm_servo_tune_page;
 
 public:
     /// @brief Публичный конструктор для сервиса
@@ -91,32 +98,49 @@ private:
             "Motor L",
             p.left_motor,
             p.storage.settings.motor_pwm,
-            p.storage.settings.left_motor},
+            p.storage.settings.left_motor
+        },
 
         right_motor_tune_page{
             "Motor R",
             p.right_motor,
             p.storage.settings.motor_pwm,
-            p.storage.settings.right_motor},
+            p.storage.settings.right_motor
+        },
 
         motor_pwm_settings_page{
-            p.storage.settings.motor_pwm},
+            p.storage.settings.motor_pwm
+        },
 
         left_encoder_tune_page{
             "Encoder L",
             p.left_encoder,
-            p.storage.settings.left_encoder},
+            p.storage.settings.left_encoder
+        },
 
         right_encoder_tune_page{
             "Encoder R",
             p.right_encoder,
-            p.storage.settings.left_encoder},
+            p.storage.settings.left_encoder
+        },
 
         encoder_conversion_settings_page{
-            p.storage.settings.encoder_conversion},
+            p.storage.settings.encoder_conversion
+        },
 
         espnow_node_settings_page{
-            p.storage.settings.espnow_node} {
+            p.storage.settings.espnow_node
+        },
+
+        claw_servo_tune_page{
+            p.claw_servo,
+            "Claw"
+        },
+
+        arm_servo_tune_page{
+            p.arm_servo,
+            "Arm 0"
+        } {
 
         kf::tui::PageManager::instance().bind(MainPage::instance());
     }

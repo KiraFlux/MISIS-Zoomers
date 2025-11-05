@@ -37,7 +37,9 @@ private:
 
 public:
     /// @brief Обработчик входящего пакета
-    std::function<void(const ControlPacket &)> handler{nullptr};
+    std::function<void(const ControlPacket &)> control_handler{nullptr};
+
+    std::function<void(void)> failsafe_handler{nullptr};
 
     explicit DualJoystickRemoteController(kf::Milliseconds packet_timeout) :
         packet_timeout_manager{packet_timeout} {}
@@ -50,10 +52,12 @@ public:
 
                 disconnected = true;
                 resetControlPacket();
+
+                if (failsafe_handler) failsafe_handler();
             }
         } else {
             disconnected = false;
-            if (handler) { handler(packet); }
+            if (control_handler) { control_handler(packet); }
         }
     }
 

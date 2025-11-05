@@ -67,21 +67,21 @@ struct Service final : kf::tools::Singleton<Service> {
             }
         };
 
-        dual_joystick_remote_controller.handler = [](const DualJoystickRemoteController::ControlPacket &packet) {
-//            kf_Logger_debug(
-//                "Packet:"
-//                "L(%f\t%f)\t"
-//                "R(%f\t%f)",
-//                packet.left_x,
-//                packet.left_y,
-//                packet.right_x,
-//                packet.right_y
-//            );
-
+        dual_joystick_remote_controller.control_handler = [](const DualJoystickRemoteController::ControlPacket &packet) {
             periphery.left_motor.set(packet.left_y + packet.left_x);
             periphery.right_motor.set(packet.left_y - packet.left_x);
 
-            periphery.generic_servo.setAngle(kf::u16(180.0f * (packet.right_y * 0.5f + 0.5f)));
+            //            kf_Logger_debug("angle=%d", angle);
+            periphery.claw_servo.set(static_cast<kf::Degrees>(packet.right_x * 90 + 90));
+            periphery.arm_servo.set(static_cast<kf::Degrees>(packet.right_y * 45 + 90 + 45));
+        };
+
+        dual_joystick_remote_controller.failsafe_handler = [](){
+            periphery.claw_servo.detach();
+            periphery.arm_servo.detach();
+
+            periphery.left_motor.stop();
+            periphery.right_motor.stop();
         };
 
         text_ui.send_handler = [](const kf::tui::TextStream::Slice &slice) -> bool {

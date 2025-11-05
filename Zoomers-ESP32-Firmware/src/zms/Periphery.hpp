@@ -7,7 +7,7 @@
 #include "zms/drivers/EspnowNode.hpp"
 #include "zms/drivers/Motor.hpp"
 #include "zms/drivers/Sharp.hpp"
-#include "zms/drivers/Servo.hpp"
+#include "zms/drivers/PwmPositionServo.hpp"
 
 /// @brief MISIS-Zoomers
 namespace zms {
@@ -32,10 +32,16 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         // Servo
 
         /// @brief Настройки ШИМ сервопривода
-        Servo::PwmSettings servo_pwm;
+        PwmPositionServo::PwmSettings servo_pwm;
 
-        /// @brief Настройки сервопривода общего назначения
-        Servo::DriverSettings generic_servo;
+        /// @brief Настройки Pulse сервопривода
+        PwmPositionServo::PulseSettings servo_pulse_settings;
+
+        /// @brief Настройки сервопривода Захвата
+        PwmPositionServo::DriverSettings claw_servo;
+
+        /// @brief Настройки сервопривода Захвата
+        PwmPositionServo::DriverSettings arm_servo;
 
         // Энкодер
 
@@ -55,7 +61,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
     };
 
     /// @brief Хранилище настроек
-    kf::Storage<Settings> storage{.key = "RobotSet", .settings = defaultSettings()};
+    kf::Storage<Settings> storage{"RobotSet", defaultSettings()};
 
     // Аппаратные компоненты
 
@@ -69,8 +75,11 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
 
     // Сервоприводы
 
-    /// @brief Сервопривод общего назначения
-    Servo generic_servo{storage.settings.generic_servo, storage.settings.servo_pwm};
+    /// @brief Сервопривод захвата
+    PwmPositionServo claw_servo{storage.settings.servo_pwm, storage.settings.claw_servo, storage.settings.servo_pulse_settings};
+
+    /// @brief Сервопривод звена
+    PwmPositionServo arm_servo{storage.settings.servo_pwm, storage.settings.arm_servo, storage.settings.servo_pulse_settings};
 
     // Энкодеры
 
@@ -106,7 +115,8 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }
 
-//        if (not generic_servo.init()) { return false; }
+        if (not claw_servo.init()) { return false; }
+        if (not arm_servo.init()) { return false; }
 
         if (not left_distance_sensor.init()) { return false; }
         if (not right_distance_sensor.init()) { return false; }
@@ -140,23 +150,32 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
             },
             .right_motor = {
                 .impl = Motor::DriverImpl::IArduino,
-                .direction = Motor::Direction::CCW,
+                .direction = Motor::Direction::CW,
                 .pin_a = static_cast<rs::u8>(GPIO_NUM_19),
                 .pin_b = static_cast<rs::u8>(GPIO_NUM_18),
                 .ledc_channel = 1,
             },
             .servo_pwm = {
                 .ledc_frequency_hz = 50,
-                .ledc_resolution_bits = 16,
+                .ledc_resolution_bits = 10,
             },
-            .generic_servo = {
+            .servo_pulse_settings = {
+                .min_position={
+                    .pulse=500,
+                    .angle=0,
+                },
+                .max_position={
+                    .pulse=2400,
+                    .angle=180,
+                }
+            },
+            .claw_servo = {
                 .signal_pin = 15,
-                .ledc_channel = 2,
-                .direction = Servo::Direction::CW,
-                .min_angle = 0,
-                .max_angle = 180,
-                .min_pulse_us = 500,
-                .max_pulse_us = 2400,
+                .ledc_channel = 15,
+            },
+            .arm_servo = {
+                .signal_pin = 14,
+                .ledc_channel = 14,
             },
             .encoder_conversion = {
                 .ticks_in_one_mm = (5000.0f / 2100.0f),
