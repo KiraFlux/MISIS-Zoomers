@@ -7,7 +7,7 @@
 #include "zms/drivers/EspnowNode.hpp"
 #include "zms/drivers/Motor.hpp"
 #include "zms/drivers/Sharp.hpp"
-#include "zms/drivers/PwmPositionServo.hpp"
+#include "zms/drivers/Manipulator2DOF.hpp"
 
 /// @brief MISIS-Zoomers
 namespace zms {
@@ -29,19 +29,9 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         /// @brief Настройки драйверов моторов
         Motor::DriverSettings left_motor, right_motor;
 
-        // Servo
+        // 
 
-        /// @brief Настройки ШИМ сервопривода
-        PwmPositionServo::PwmSettings servo_pwm;
-
-        /// @brief Настройки Pulse сервопривода
-        PwmPositionServo::PulseSettings servo_generic_pulse_settings;
-
-        /// @brief Настройки сервопривода Захвата
-        PwmPositionServo::DriverSettings servo_mg90s;
-
-        /// @brief Настройки сервопривода Захвата
-        PwmPositionServo::DriverSettings servo_mg996;
+        Manipulator2DOF::Settings manipulator;
 
         // Энкодер
 
@@ -75,11 +65,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
 
     // Сервоприводы
 
-    /// @brief Сервопривод захвата
-    PwmPositionServo servo_mg90s{storage.settings.servo_pwm, storage.settings.servo_mg90s, storage.settings.servo_generic_pulse_settings};
-
-    /// @brief Сервопривод звена
-    PwmPositionServo servo_mg996{storage.settings.servo_pwm, storage.settings.servo_mg996, storage.settings.servo_generic_pulse_settings};
+    Manipulator2DOF manipulator{storage.settings.manipulator};
 
     // Энкодеры
 
@@ -115,8 +101,6 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }
 
-        if (not servo_mg90s.init()) { return false; }
-        if (not servo_mg996.init()) { return false; }
 
         if (not left_distance_sensor.init()) { return false; }
         if (not right_distance_sensor.init()) { return false; }
@@ -155,27 +139,37 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                 .pin_b = static_cast<rs::u8>(GPIO_NUM_18),
                 .ledc_channel = 1,
             },
-            .servo_pwm = {
-                .ledc_frequency_hz = 50,
-                .ledc_resolution_bits = 10,
-            },
-            .servo_generic_pulse_settings = {
-                .min_position={
-                    .pulse=500,
-                    .angle=0,
+            .manipulator = {
+                .servo_pwm = {
+                    .ledc_frequency_hz = 50,
+                    .ledc_resolution_bits = 10,
                 },
-                .max_position={
-                    .pulse=2400,
-                    .angle=180,
-                }
-            },
-            .servo_mg90s = {
-                .signal_pin = 15,
-                .ledc_channel = 15,
-            },
-            .servo_mg996 = {
-                .signal_pin = 14,
-                .ledc_channel = 14,
+                .servo_generic_pulse_settings = {
+                    .min_position={
+                        .pulse=500,
+                        .angle=0,
+                    },
+                    .max_position={
+                        .pulse=2400,
+                        .angle=180,
+                    }
+                },
+                .claw_axis = {
+                    .servo = {
+                        .signal_pin = 15,
+                        .ledc_channel = 15,
+                    },
+                    .min_angle = 0,
+                    .max_angle = 180,
+                },
+                .arm_axis = {
+                    .servo = {
+                        .signal_pin = 14,
+                        .ledc_channel = 14,
+                    },
+                    .min_angle = 90,
+                    .max_angle = 180,
+                },
             },
             .encoder_conversion = {
                 .ticks_in_one_mm = (5000.0f / 2100.0f),
