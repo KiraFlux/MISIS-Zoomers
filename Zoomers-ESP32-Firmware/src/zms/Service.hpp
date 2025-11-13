@@ -72,13 +72,13 @@ struct Service final : kf::tools::Singleton<Service> {
             periphery.right_motor.set(packet.left_y - packet.left_x);
 
             //            kf_Logger_debug("angle=%d", angle);
-            periphery.claw_servo.set(static_cast<kf::Degrees>(packet.right_x * 90 + 90));
-            periphery.arm_servo.set(static_cast<kf::Degrees>(packet.right_y * 45 + 90 + 45));
+            periphery.servo_mg90s.set(static_cast<kf::Degrees>(packet.right_x * 90 + 90));
+            periphery.servo_mg996.set(static_cast<kf::Degrees>(packet.right_y * 45 + 90 + 45));
         };
 
         dual_joystick_remote_controller.failsafe_handler = [](){
-            periphery.claw_servo.detach();
-            periphery.arm_servo.detach();
+            periphery.servo_mg90s.detach();
+            periphery.servo_mg996.detach();
 
             periphery.left_motor.stop();
             periphery.right_motor.stop();

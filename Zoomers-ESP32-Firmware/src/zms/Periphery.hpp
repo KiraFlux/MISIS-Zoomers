@@ -35,13 +35,13 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         PwmPositionServo::PwmSettings servo_pwm;
 
         /// @brief Настройки Pulse сервопривода
-        PwmPositionServo::PulseSettings servo_pulse_settings;
+        PwmPositionServo::PulseSettings servo_generic_pulse_settings;
 
         /// @brief Настройки сервопривода Захвата
-        PwmPositionServo::DriverSettings claw_servo;
+        PwmPositionServo::DriverSettings servo_mg90s;
 
         /// @brief Настройки сервопривода Захвата
-        PwmPositionServo::DriverSettings arm_servo;
+        PwmPositionServo::DriverSettings servo_mg996;
 
         // Энкодер
 
@@ -76,10 +76,10 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
     // Сервоприводы
 
     /// @brief Сервопривод захвата
-    PwmPositionServo claw_servo{storage.settings.servo_pwm, storage.settings.claw_servo, storage.settings.servo_pulse_settings};
+    PwmPositionServo servo_mg90s{storage.settings.servo_pwm, storage.settings.servo_mg90s, storage.settings.servo_generic_pulse_settings};
 
     /// @brief Сервопривод звена
-    PwmPositionServo arm_servo{storage.settings.servo_pwm, storage.settings.arm_servo, storage.settings.servo_pulse_settings};
+    PwmPositionServo servo_mg996{storage.settings.servo_pwm, storage.settings.servo_mg996, storage.settings.servo_generic_pulse_settings};
 
     // Энкодеры
 
@@ -115,8 +115,8 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }
 
-        if (not claw_servo.init()) { return false; }
-        if (not arm_servo.init()) { return false; }
+        if (not servo_mg90s.init()) { return false; }
+        if (not servo_mg996.init()) { return false; }
 
         if (not left_distance_sensor.init()) { return false; }
         if (not right_distance_sensor.init()) { return false; }
@@ -159,7 +159,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                 .ledc_frequency_hz = 50,
                 .ledc_resolution_bits = 10,
             },
-            .servo_pulse_settings = {
+            .servo_generic_pulse_settings = {
                 .min_position={
                     .pulse=500,
                     .angle=0,
@@ -169,11 +169,11 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                     .angle=180,
                 }
             },
-            .claw_servo = {
+            .servo_mg90s = {
                 .signal_pin = 15,
                 .ledc_channel = 15,
             },
-            .arm_servo = {
+            .servo_mg996 = {
                 .signal_pin = 14,
                 .ledc_channel = 14,
             },

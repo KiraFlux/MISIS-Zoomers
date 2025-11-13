@@ -133,12 +133,12 @@ private:
         },
 
         claw_servo_tune_page{
-            p.claw_servo,
+            p.servo_mg90s,
             "Claw"
         },
 
         arm_servo_tune_page{
-            p.arm_servo,
+            p.servo_mg996,
             "Arm 0"
         } {
 
