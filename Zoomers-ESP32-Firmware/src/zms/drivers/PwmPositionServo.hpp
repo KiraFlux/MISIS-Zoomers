@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <kf/Logger.hpp>
+#include <kf/tools/validation.hpp>
 #include <kf/units.hpp>
 
 
@@ -9,13 +9,9 @@ namespace zms {
 
 struct PwmPositionServo {
 
-    struct PwmSettings {
+    struct PwmSettings : kf::tools::Validable<PwmSettings> {
         kf::u32 ledc_frequency_hz;
         kf::u8 ledc_resolution_bits;
-
-        [[nodiscard]] bool isValid() const {
-            return ledc_frequency_hz > 0 and ledc_resolution_bits >= 8 and ledc_resolution_bits <= 16;
-        }
 
         [[nodiscard]] inline kf::u32 maxDuty() const {
             return (1u << ledc_resolution_bits) - 1u;
@@ -25,18 +21,31 @@ struct PwmPositionServo {
             const auto t = kf::u64(pulse_width) * ledc_frequency_hz * maxDuty();
             return kf::u16(t / 1000000u);
         }
-    };
 
-    struct DriverSettings {
-        kf::u8 signal_pin;
-        kf::u8 ledc_channel;
-
-        [[nodiscard]] bool isValid() const {
-            return ledc_channel <= 15;
+        void check(kf::tools::Validator &validator) const {
+            kf_Validator_check(validator, ledc_frequency_hz > 0);
+            kf_Validator_check(validator, ledc_resolution_bits >= 8);
+            kf_Validator_check(validator, ledc_resolution_bits <= 16);
         }
     };
 
-    struct PulseSettings {
+    struct DriverSettings : kf::tools::Validable<PwmSettings> {
+        kf::u8 signal_pin;
+        kf::u8 ledc_channel;
+
+        /// @brief Минимальный угол оси
+        kf::Degrees min_angle;
+
+        /// @brief Максимальный угол оси
+        kf::Degrees max_angle;
+
+        void check(kf::tools::Validator &validator) const {
+            kf_Validator_check(validator, ledc_channel <= 15);
+            kf_Validator_check(validator, min_angle < max_angle);
+        }
+    };
+
+    struct PulseSettings : kf::tools::Validable<PwmSettings> {
         struct Pulse {
             kf::Microseconds pulse;
             kf::Degrees angle;
@@ -44,20 +53,6 @@ struct PwmPositionServo {
 
         Pulse min_position;
         Pulse max_position;
-
-        [[nodiscard]] bool isValid() const {
-            if (min_position.pulse >= max_position.pulse) {
-                kf_Logger_debug("Pulse min > max");
-                return false;
-            }
-
-            if (min_position.angle >= max_position.angle) {
-                kf_Logger_debug("Angle min > max");
-                return false;
-            }
-
-            return true;
-        }
 
         [[nodiscard]] kf::Microseconds pulseWidthFromAngle(kf::Degrees angle) const {
             return map(
@@ -68,7 +63,14 @@ struct PwmPositionServo {
                 static_cast<long>(max_position.pulse)
             );
         }
+
+        void check(kf::tools::Validator &validator) const {
+            kf_Validator_check(validator, min_position.pulse < max_position.pulse);
+            kf_Validator_check(validator, min_position.angle < max_position.angle);
+        }
     };
+
+private:
 
     const PwmSettings &pwm_settings;
     const DriverSettings &driver_settings;
@@ -82,11 +84,7 @@ public:
     ) :
         driver_settings{driver_settings}, pwm_settings(pwm_settings), pulse_settings(pulse_settings) {}
 
-    [[nodiscard]] bool init() {
-        if (not pulse_settings.isValid()) { return false; }
-        if (not pwm_settings.isValid()) { return false; }
-        if (not driver_settings.isValid()) { return false; }
-
+    [[nodiscard]] bool init() const {
         const auto freq = ledcSetup(
             driver_settings.ledc_channel,
             pwm_settings.ledc_frequency_hz,
@@ -107,7 +105,9 @@ public:
         write(pwm_settings.dutyFromPulseWidth(pulse_settings.pulseWidthFromAngle(angle)));
     }
 
-    void detach() { write(0); }
+    void disable() {
+        write(0);
+    }
 
 private:
     void write(kf::u16 duty) const {

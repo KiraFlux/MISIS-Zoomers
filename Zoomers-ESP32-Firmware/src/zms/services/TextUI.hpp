@@ -12,7 +12,6 @@
 #include "zms/ui/pages/MotorPwmSettingsPage.hpp"
 #include "zms/ui/pages/MotorTunePage.hpp"
 #include "zms/ui/pages/StoragePage.hpp"
-#include "zms/ui/pages/ServoTunePage.hpp"
 
 
 namespace zms {
@@ -49,9 +48,6 @@ private:
     EspnowNodeSettingsPage espnow_node_settings_page;
 
     //
-
-    /// @brief Страница настройки сервопривода
-    ServoTunePage claw_servo_tune_page, arm_servo_tune_page;
 
 public:
     /// @brief Публичный конструктор для сервиса
@@ -130,16 +126,6 @@ private:
 
         espnow_node_settings_page{
             p.storage.settings.espnow_node
-        },
-
-        claw_servo_tune_page{
-            p.servo_mg90s,
-            "Claw"
-        },
-
-        arm_servo_tune_page{
-            p.servo_mg996,
-            "Arm 0"
         } {
 
         kf::tui::PageManager::instance().bind(MainPage::instance());

@@ -19,14 +19,14 @@ void setup() {
     kf_Logger_info("begin");
 
     const bool periphery_ok = periphery.init();
-    const bool service_ok = service.init();
 
-    if (not periphery_ok or not service_ok) {
+    if (not periphery_ok) {
         kf_Logger_fatal("Robot init failed!");
-        periphery.storage.erase();
         delay(5000);
         ESP.restart();
     }
+
+    service.init();
 
     kf_Logger_debug("init ok");
 }

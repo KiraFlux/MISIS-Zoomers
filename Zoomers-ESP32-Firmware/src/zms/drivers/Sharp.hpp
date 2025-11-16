@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include <kf/Logger.hpp>
 #include <kf/units.hpp>
+#include <kf/tools/validation.hpp>
 
 
 namespace zms {
@@ -14,7 +14,7 @@ struct Sharp {
     using AnalogValue = rs::u16;
 
     /// @brief Настройки Sharp
-    struct Settings {
+    struct Settings : kf::tools::Validable<Settings> {
 
         /// @brief Аналоговый пин сенсора
         rs::u8 pin;
@@ -22,12 +22,9 @@ struct Sharp {
         /// @brief Разрешение АЦП
         rs::u8 resolution;
 
-        [[nodiscard]] bool isValid() const {
-            if (resolution < 0 or resolution > 16) {
-                kf_Logger_error("Invalid!");
-                return false;
-            }
-            return true;
+        void check(kf::tools::Validator &validator) const {
+            kf_Validator_check(validator, resolution > 0);
+            kf_Validator_check(validator, resolution <= 16);
         }
     };
 
@@ -41,8 +38,6 @@ public:
         settings{settings} {}
 
     [[nodiscard]] bool init() {
-        if (not settings.isValid()) { return false; }
-
         max_value = static_cast<AnalogValue>((1u << settings.resolution) - 1u);
 
         pinMode(settings.pin, INPUT);

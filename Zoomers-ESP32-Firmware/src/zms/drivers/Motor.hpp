@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <kf/Logger.hpp>
+#include <kf/tools/validation.hpp>
 #include <kf/units.hpp>
 
 
@@ -11,10 +11,19 @@ namespace zms {
 struct Motor {
 
     /// @brief Псевдоним типа для значения ШИМ
-    using SignedPwm = rs::i16;
+    using SignedPwm = kf::i16;
+
+    /// @brief Тип драйвера мотора
+    enum class DriverImpl : kf::u8 {
+        /// @brief Реализация мотор-шилда IArduino
+        IArduino = 0x00,
+
+        /// @brief Реализация драйвера моторов на H-Мосте L298nModule
+        L298nModule = 0x01,
+    };
 
     /// @brief Определяет направление положительного вращения
-    enum class Direction : rs::u8 {
+    enum class Direction : kf::u8 {
         /// @brief Положительное вращение - по часовой
         CW = 0x00,
 
@@ -22,17 +31,8 @@ struct Motor {
         CCW = 0x01
     };
 
-    /// @brief Тип драйвера мотора
-    enum class DriverImpl : rs::u8 {
-        /// @brief Реализация мотор-шилда IArduino
-        IArduino = 0x00,
-
-        /// @brief Реализация драйвера моторов на H-Мосте L298nModule 
-        L298nModule = 0x01,
-    };
-
     /// @brief Настройки драйвера
-    struct DriverSettings {
+    struct DriverSettings : kf::tools::Validable<DriverSettings> {
 
         /// @brief Выбранный драйвер
         DriverImpl impl;
@@ -42,30 +42,24 @@ struct Motor {
 
         /// @brief IArduino Motor Shield: Пин направления (H-bridge)
         /// @brief L293N Module: IN1 / IN3
-        rs::u8 pin_a;
+        kf::u8 pin_a;
 
         /// @brief IArduino Motor Shield: Пин скорости (Enable)
         /// @brief L293N Module: IN2 / IN4
-        rs::u8 pin_b;
+        kf::u8 pin_b;
 
         /// @brief Канал (0 .. 15)
-        rs::u8 ledc_channel;
+        kf::u8 ledc_channel;
 
-        /// @brief Проверяет корректность настроек
-        /// @return <code>true</code> - Заданные параметры в норме
-        [[nodiscard]] bool isValid() const {
-            if (ledc_channel > 15) {
-                kf_Logger_error("Invalid");
-                return false;
-            }
-            return true;
+        void check(kf::tools::Validator &validator) const {
+            kf_Validator_check(validator, ledc_channel <= 15);
         }
     };
 
     /// @brief Настройки ШИМ
-    struct PwmSettings {
+    struct PwmSettings : kf::tools::Validable<PwmSettings> {
         /// @brief Скаляр для частоты ШИМ
-        using FrequencyScalar = rs::u16;
+        using FrequencyScalar = kf::u16;
 
         /// @brief Частота ШИМ Гц
         FrequencyScalar ledc_frequency_hz;
@@ -74,18 +68,18 @@ struct Motor {
         SignedPwm dead_zone;
 
         /// @brief Разрешение (8 .. 12)
-        rs::u8 ledc_resolution_bits;
-
-        [[nodiscard]] bool isValid() const {
-            if (dead_zone < 0 or ledc_resolution_bits < 8 or ledc_resolution_bits > 12) {
-                kf_Logger_error("Invalid");
-                return false;
-            }
-            return true;
-        }
+        kf::u8 ledc_resolution_bits;
 
         /// @brief Рассчитать актуальное максимальное значение ШИМ
-        [[nodiscard]] inline SignedPwm maxPwm() const { return static_cast<SignedPwm>((1u << ledc_resolution_bits) - 1u); }
+        [[nodiscard]] inline SignedPwm maxPwm() const {
+            return static_cast<SignedPwm>((1u << ledc_resolution_bits) - 1u);
+        }
+
+        void check(kf::tools::Validator &validator) const {
+            kf_Validator_check(validator, dead_zone >= 0);
+            kf_Validator_check(validator, ledc_resolution_bits >= 8);
+            kf_Validator_check(validator, ledc_resolution_bits <= 12);
+        }
     };
 
     /// @brief Настройки драйвера
@@ -100,35 +94,13 @@ private:
 
 public:
     explicit constexpr Motor(const DriverSettings &driver_settings, const PwmSettings &pwm_settings) :
-        driver_settings{driver_settings}, pwm_settings(pwm_settings) {}
+        driver_settings{driver_settings}, pwm_settings{pwm_settings} {}
 
     [[nodiscard]] bool init() {
-        kf_Logger_info(
-            "pins A=%d, B=%d, channel=%d\n",
-            driver_settings.pin_a,
-            driver_settings.pin_b,
-            driver_settings.ledc_channel);
-
-        if (not driver_settings.isValid()) {
-            kf_Logger_error("invalid driver settings!");
-            return false;
-        }
-
-        if (not pwm_settings.isValid()) {
-            kf_Logger_error("invalid pwm settings!");
-            return false;
-        }
-
         max_pwm = pwm_settings.maxPwm();
-        kf_Logger_debug(
-            "max_pwm=%d, freq=%d, resolution=%d\n",
-            max_pwm,
-            pwm_settings.ledc_frequency_hz,
-            pwm_settings.ledc_resolution_bits);
 
         pinMode(driver_settings.pin_a, OUTPUT);
         pinMode(driver_settings.pin_b, OUTPUT);
-        kf_Logger_debug("pins configured as OUTPUT");
 
         switch (driver_settings.impl) {
             case DriverImpl::IArduino: {
@@ -139,15 +111,12 @@ public:
                     pwm_settings.ledc_frequency_hz,
                     pwm_settings.ledc_resolution_bits);
 
-                kf_Logger_debug("LEDC setup - freq=%u", current_frequency);
-
                 if (current_frequency == 0) {
                     kf_Logger_error("LEDC setup failed!");
                     return false;
                 }
 
                 ledcAttachPin(driver_settings.pin_b, driver_settings.ledc_channel);
-                kf_Logger_debug("LEDC attached to pin");
             }
                 break;
 
@@ -167,10 +136,14 @@ public:
     }
 
     /// @brief Установить значение в нормализованной величине
-    void set(float value) const { write(fromNormalized(value)); }
+    void set(float value) const {
+        write(fromNormalized(value));
+    }
 
     /// @brief Остановить мотор
-    inline void stop() const { write(0); }
+    inline void stop() const {
+        write(0);
+    }
 
     /// @brief Установить значение ШИМ + направление
     /// @param pwm Значение - ШИМ, Знак - направление
@@ -183,7 +156,7 @@ public:
                 digitalWrite(driver_settings.pin_a, matchDirection(pwm));
                 ledcWrite(driver_settings.ledc_channel, std::abs(pwm));
             }
-                break;
+                return;
 
             case DriverImpl::L298nModule: {
                 const bool positive_direction = matchDirection(pwm);
@@ -195,7 +168,7 @@ public:
                     analogWrite(driver_settings.pin_b, std::abs(pwm));
                 }
             }
-                break;
+                return;
         }
     }
 

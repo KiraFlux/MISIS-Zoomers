@@ -28,8 +28,8 @@ struct ServoTunePage : kf::tui::Page {
             [this, &servo]() { servo.set(angle); }
         },
         detach_button{
-            "detach",
-            [&servo]() { servo.detach(); }
+            "disable",
+            [&servo]() { servo.disable(); }
         } {
 
         link(MainPage::instance());

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kf/tools/Storage.hpp>
+#include <kf/tools/validation.hpp>
 #include <kf/tools/meta/Singleton.hpp>
 
 #include "zms/drivers/Encoder.hpp"
@@ -19,7 +20,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
     friend struct Singleton<Periphery>;
 
     /// @brief Настройки аппаратного обеспечения
-    struct Settings {
+    struct Settings : kf::tools::Validable<Settings> {
 
         // Драйвер моторов
 
@@ -30,7 +31,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         Motor::DriverSettings left_motor, right_motor;
 
         // 
-
+        /// @brief Настройки двухосного манипулятора
         Manipulator2DOF::Settings manipulator;
 
         // Энкодер
@@ -48,6 +49,23 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
 
         /// @brief Настройки узла Espnow
         EspnowNode::Settings espnow_node;
+
+        void check(kf::tools::Validator &validator) const {
+            // motors
+            kf_Validator_check(validator, motor_pwm.isValid());
+            kf_Validator_check(validator, left_motor.isValid());
+            kf_Validator_check(validator, right_motor.isValid());
+
+            //
+            kf_Validator_check(validator, manipulator.isValid());
+
+            // encoders
+            kf_Validator_check(validator, encoder_conversion.isValid());
+
+            // distance sensors
+            kf_Validator_check(validator, left_distance_sensor.isValid());
+            kf_Validator_check(validator, right_distance_sensor.isValid());
+        }
     };
 
     /// @brief Хранилище настроек
@@ -63,8 +81,9 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
     /// @brief Правый мотор
     Motor right_motor{storage.settings.right_motor, storage.settings.motor_pwm};
 
-    // Сервоприводы
+    // Манипуляторы
 
+    /// @brief Манипулятор
     Manipulator2DOF manipulator{storage.settings.manipulator};
 
     // Энкодеры
@@ -83,7 +102,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
     /// @brief Правый датчик расстояния
     Sharp right_distance_sensor{storage.settings.right_distance_sensor};
 
-    // Сеть
+    //
 
     /// @brief Узел протокола Espnow
     EspnowNode espnow_node{storage.settings.espnow_node};
@@ -94,22 +113,21 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         if (not storage.load()) {
             // Не удалось - сохраняем значения по умолчанию
             if (not storage.save()) {
+                storage.erase();
                 return false;
             }
         }
 
+        if (not storage.settings.isValid()) { return false; }
+
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }
-
 
         if (not left_distance_sensor.init()) { return false; }
         if (not right_distance_sensor.init()) { return false; }
 
         left_encoder.init();
         right_encoder.init();
-
-        left_encoder.enable();
-        right_encoder.enable();
 
         if (not espnow_node.init()) { return false; }
 
@@ -128,15 +146,15 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
             .left_motor = {
                 .impl = Motor::DriverImpl::IArduino,
                 .direction = Motor::Direction::CCW,
-                .pin_a = static_cast<rs::u8>(GPIO_NUM_27),
-                .pin_b = static_cast<rs::u8>(GPIO_NUM_21),
+                .pin_a = static_cast<kf::u8>(GPIO_NUM_27),
+                .pin_b = static_cast<kf::u8>(GPIO_NUM_21),
                 .ledc_channel = 0,
             },
             .right_motor = {
                 .impl = Motor::DriverImpl::IArduino,
                 .direction = Motor::Direction::CW,
-                .pin_a = static_cast<rs::u8>(GPIO_NUM_19),
-                .pin_b = static_cast<rs::u8>(GPIO_NUM_18),
+                .pin_a = static_cast<kf::u8>(GPIO_NUM_19),
+                .pin_b = static_cast<kf::u8>(GPIO_NUM_18),
                 .ledc_channel = 1,
             },
             .manipulator = {
@@ -155,18 +173,14 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                     }
                 },
                 .claw_axis = {
-                    .servo = {
-                        .signal_pin = 15,
-                        .ledc_channel = 15,
-                    },
+                    .signal_pin = 15,
+                    .ledc_channel = 15,
                     .min_angle = 0,
                     .max_angle = 180,
                 },
                 .arm_axis = {
-                    .servo = {
-                        .signal_pin = 14,
-                        .ledc_channel = 14,
-                    },
+                    .signal_pin = 14,
+                    .ledc_channel = 14,
                     .min_angle = 90,
                     .max_angle = 180,
                 },
@@ -175,21 +189,21 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                 .ticks_in_one_mm = (5000.0f / 2100.0f),
             },
             .left_encoder = {
-                .phase_a = static_cast<rs::u8>(GPIO_NUM_32),
-                .phase_b = static_cast<rs::u8>(GPIO_NUM_33),
+                .phase_a = static_cast<kf::u8>(GPIO_NUM_32),
+                .phase_b = static_cast<kf::u8>(GPIO_NUM_33),
                 .edge = Encoder::PinsSettings::Edge::Rising,
             },
             .right_encoder = {
-                .phase_a = static_cast<rs::u8>(GPIO_NUM_25),
-                .phase_b = static_cast<rs::u8>(GPIO_NUM_26),
+                .phase_a = static_cast<kf::u8>(GPIO_NUM_25),
+                .phase_b = static_cast<kf::u8>(GPIO_NUM_26),
                 .edge = Encoder::PinsSettings::Edge::Falling,
             },
             .left_distance_sensor = {
-                .pin = static_cast<rs::u8>(GPIO_NUM_34),
+                .pin = static_cast<kf::u8>(GPIO_NUM_34),
                 .resolution = 10,
             },
             .right_distance_sensor = {
-                .pin = static_cast<rs::u8>(GPIO_NUM_35),
+                .pin = static_cast<kf::u8>(GPIO_NUM_35),
                 .resolution = 10,
             },
             .espnow_node = {

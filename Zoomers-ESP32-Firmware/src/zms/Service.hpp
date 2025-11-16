@@ -24,12 +24,12 @@ struct Service final : kf::tools::Singleton<Service> {
     ByteLangBridgeProtocol bytelang_bridge{};
 
     /// @brief Инициализация сервисов
-    [[nodiscard]] bool init() {
+    void init() {
         static auto &periphery = zms::Periphery::instance();
 
-        periphery.espnow_node.on_receive = [this](const void *data, rs::u8 size) {
+        periphery.espnow_node.on_receive = [this](const void *data, kf::u8 size) {
             /// Действие в меню
-            enum Action : rs::u8 {
+            enum Action : kf::u8 {
                 None = 0x00,
                 Reload = 0x10,
                 Click = 0x20,
@@ -71,17 +71,15 @@ struct Service final : kf::tools::Singleton<Service> {
             periphery.left_motor.set(packet.left_y + packet.left_x);
             periphery.right_motor.set(packet.left_y - packet.left_x);
 
-            //            kf_Logger_debug("angle=%d", angle);
-            periphery.servo_mg90s.set(static_cast<kf::Degrees>(packet.right_x * 90 + 90));
-            periphery.servo_mg996.set(static_cast<kf::Degrees>(packet.right_y * 45 + 90 + 45));
+            periphery.manipulator.setArm(static_cast<kf::Degrees>(packet.right_y * 45 + 90 + 45));
+            periphery.manipulator.setClaw(static_cast<kf::Degrees>(packet.right_x * 90 + 90));
         };
 
-        dual_joystick_remote_controller.failsafe_handler = [](){
-            periphery.servo_mg90s.detach();
-            periphery.servo_mg996.detach();
-
+        dual_joystick_remote_controller.disconnect_handler = []() {
             periphery.left_motor.stop();
             periphery.right_motor.stop();
+
+            periphery.manipulator.disable();
         };
 
         text_ui.send_handler = [](const kf::tui::TextStream::Slice &slice) -> bool {
@@ -94,8 +92,6 @@ struct Service final : kf::tools::Singleton<Service> {
 
             return true;
         };
-
-        return true;
     }
 
     /// @brief Прокрутка событий сервисов
