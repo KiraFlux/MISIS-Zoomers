@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kf/tui.hpp>
-#include <rs/aliases.hpp>
+#include <kf/aliases.hpp>
 
 #include "zms/drivers/Motor.hpp"
 #include "zms/ui/pages/MainPage.hpp"
@@ -30,7 +30,7 @@ struct MotorTunePage final : kf::tui::Page {
 
     // Управление значением управления
 
-    using NormalizedInput = kf::tui::Labeled<kf::tui::SpinBox<rs::f32>>;
+    using NormalizedInput = kf::tui::Labeled<kf::tui::SpinBox<kf::f32>>;
 
     /// @brief Ввод нормализованного значения управления мотором
     NormalizedInput normalized_input;
@@ -74,9 +74,24 @@ struct MotorTunePage final : kf::tui::Page {
                 }
             }
         },
-        pwm_input{"PWM", PwmInput::Content{pwm_set}},
-        normalized_input{"Norm", NormalizedInput::Content{normalized_value_set, 0.1f}},
-        frequency_input{"Hz", FrequencyInput::Content{pwm_settings.ledc_frequency_hz, 1000, FrequencyInput::Content::Mode::ArithmeticPositiveOnly}},
+        pwm_input{
+            "PWM",
+            PwmInput::Content{pwm_set}
+        },
+        normalized_input{
+            "Norm",
+            NormalizedInput::Content{
+                normalized_value_set, 0.1f
+            }
+        },
+        frequency_input{
+            "Hz",
+            FrequencyInput::Content{
+                pwm_settings.ledc_frequency_hz,
+                1000,
+                FrequencyInput::Content::Mode::ArithmeticPositiveOnly
+            }
+        },
 
         direction{
             {

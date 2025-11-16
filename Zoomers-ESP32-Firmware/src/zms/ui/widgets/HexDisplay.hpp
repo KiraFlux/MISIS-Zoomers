@@ -9,16 +9,15 @@ namespace zms {
 struct HexDisplay final : kf::tui::Widget {
 
 private:
-    kf::tui::TextStream::Slice view;
+    kf::slice<const kf::u8> view;
 
 public:
-    explicit HexDisplay(kf::tui::TextStream::Slice v) :
+    explicit HexDisplay(const kf::slice<const kf::u8> &v) :
         view{v} {}
 
-    void doRender(kf::tui::TextStream &stream) const override {
-        for (rs::size i = 0; i < view.len; i += 1) {
-            const rs::u8 b = *(view.data + i);
-            stream.print(b, HEX);
+    void doRender(kf::tui::BufferStream &stream) const override {
+        for (kf::usize i = 0; i < view.size; i += 1) {
+            stream.print(view.ptr[i], HEX);
         }
     }
 };

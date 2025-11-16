@@ -48,7 +48,7 @@ public:
     explicit Manipulator2DOF(const Settings &settings) :
         settings{settings},
         arm_axis{settings.servo_pwm, settings.arm_axis, settings.servo_generic_pulse_settings},
-        claw_axis{settings.servo_pwm, settings.arm_axis, settings.servo_generic_pulse_settings} {}
+        claw_axis{settings.servo_pwm, settings.claw_axis, settings.servo_generic_pulse_settings} {}
 
     /// @brief Инициализировать захват
     [[nodiscard]] bool init() {

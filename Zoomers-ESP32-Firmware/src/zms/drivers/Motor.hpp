@@ -131,7 +131,7 @@ public:
 
         stop();
 
-        kf_Logger_debug("ok");
+        kf_Logger_debug("isOk");
         return true;
     }
 

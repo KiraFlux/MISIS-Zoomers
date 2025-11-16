@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kf/tools/meta/Singleton.hpp>
+#include <kf/aliases.hpp>
 
 #include "zms/Periphery.hpp"
 #include "zms/services/ByteLangBridgeProtocol.hpp"
@@ -27,7 +28,7 @@ struct Service final : kf::tools::Singleton<Service> {
     void init() {
         static auto &periphery = zms::Periphery::instance();
 
-        periphery.espnow_node.on_receive = [this](const void *data, kf::u8 size) {
+        periphery.espnow_node.on_receive = [this](kf::slice<const void> data) {
             /// Действие в меню
             enum Action : kf::u8 {
                 None = 0x00,
@@ -54,16 +55,16 @@ struct Service final : kf::tools::Singleton<Service> {
                 }
             };
 
-            switch (size) {
+            switch (data.size) {
                 case sizeof(zms::DualJoystickRemoteController::ControlPacket)://
-                    dual_joystick_remote_controller.updateControlPacket(*static_cast<const zms::DualJoystickRemoteController::ControlPacket *>(data));
+                    dual_joystick_remote_controller.updateControlPacket(*static_cast<const zms::DualJoystickRemoteController::ControlPacket *>(data.ptr));
                     return;
 
                 case sizeof(Action)://
-                    text_ui.addEvent(translateActionToEvent(*static_cast<const Action *>(data)));
+                    text_ui.addEvent(translateActionToEvent(*static_cast<const Action *>(data.ptr)));
                     return;
 
-                default: kf_Logger_warn("Unknown packet: (%d bytes)", size);
+                default: kf_Logger_warn("Unknown packet: (%d bytes)", data.size);
             }
         };
 
@@ -82,11 +83,16 @@ struct Service final : kf::tools::Singleton<Service> {
             periphery.manipulator.disable();
         };
 
-        text_ui.send_handler = [](const kf::tui::TextStream::Slice &slice) -> bool {
-            const auto send_result = periphery.espnow_node.send(slice.data, slice.len);
+        text_ui.send_handler = [](kf::slice<const char> slice) -> bool {
+            const auto send_result = periphery.espnow_node.send(
+                kf::slice<const void>{
+                    slice.ptr,
+                    slice.size
+                }
+            );
 
-            if (send_result.fail()) {
-                kf_Logger_error("text ui send fail: %s", rs::toString(send_result.error));
+            if (not send_result.isOk()) {
+                kf_Logger_error("text ui send fail: %s", kf::espnow::stringFromError(send_result.error().value()));
                 return false;
             }
 

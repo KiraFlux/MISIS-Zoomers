@@ -12,8 +12,8 @@ static auto &service = zms::Service::instance();
 void setup() {
     Serial.begin(115200);
 
-    kf_Logger_setWriter([](const char *buffer, size_t size) {
-        service.bytelang_bridge.send_log(buffer, size);
+    kf_Logger_setWriter([](kf::slice<char> str) {
+        service.bytelang_bridge.send_log(str);
     });
 
     kf_Logger_info("begin");
@@ -28,7 +28,7 @@ void setup() {
 
     service.init();
 
-    kf_Logger_debug("init ok");
+    kf_Logger_debug("init isOk");
 }
 
 void loop() {

@@ -11,16 +11,20 @@ namespace zms {
 struct Sharp {
 
     /// @brief Значение выхода АЦП
-    using AnalogValue = rs::u16;
+    using AnalogValue = kf::u16;
 
     /// @brief Настройки Sharp
     struct Settings : kf::tools::Validable<Settings> {
 
         /// @brief Аналоговый пин сенсора
-        rs::u8 pin;
+        kf::u8 pin;
 
         /// @brief Разрешение АЦП
-        rs::u8 resolution;
+        kf::u8 resolution;
+
+        [[nodiscard]] inline AnalogValue maxValue() const {
+            return static_cast<AnalogValue>((1u << resolution) - 1u);
+        }
 
         void check(kf::tools::Validator &validator) const {
             kf_Validator_check(validator, resolution > 0);
@@ -38,7 +42,7 @@ public:
         settings{settings} {}
 
     [[nodiscard]] bool init() {
-        max_value = static_cast<AnalogValue>((1u << settings.resolution) - 1u);
+        max_value = settings.maxValue();
 
         pinMode(settings.pin, INPUT);
         analogReadResolution(settings.resolution);

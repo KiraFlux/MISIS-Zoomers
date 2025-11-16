@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <bytelang/bridge.hpp>
 
+
 namespace zms {
 
 /// @brief Протокол ByteLang Моста
@@ -12,13 +13,13 @@ struct ByteLangBridgeProtocol final {
     using BridgeError = bytelang::bridge::Error;
 
     /// @brief Результат исполнения инструкции моста
-    using BridgeResult = rs::Result<void, BridgeError>;
+    using BridgeResult = kf::Result<void, BridgeError>;
 
     /// @brief Специализация отправителя
-    using Sender = bytelang::bridge::Sender<rs::u8>;
+    using Sender = bytelang::bridge::Sender<kf::u8>;
 
     /// @brief Специализация приёмника
-    using Receiver = bytelang::bridge::Receiver<rs::u8, 1>;
+    using Receiver = bytelang::bridge::Receiver<kf::u8, 1>;
 
 private:
     /// @brief Экземпляр отправителя для создания инструкций
@@ -31,10 +32,10 @@ public:
     // Инструкции отправки
 
     /// @brief send_millis() -> u32
-    bytelang::bridge::Instruction<Sender::Code> send_millis;
+    bytelang::bridge::Instruction <Sender::Code> send_millis;
 
     /// @brief (...) -> send_log() -> u8[u8]
-    bytelang::bridge::Instruction<Sender::Code, const char *, size_t> send_log;
+    bytelang::bridge::Instruction <Sender::Code, kf::slice<char>> send_log;
 
     //
 
@@ -54,30 +55,32 @@ private:
         sender{bytelang::core::OutputStream{arduino_stream}},
         receiver{
             .in = bytelang::core::InputStream{arduino_stream},
-            .handlers = getInstructions(),
+            .instructions = getInstructions(),
         },
         send_millis{
             sender.createInstruction(
                 [](bytelang::core::OutputStream &stream) -> BridgeResult {
-                    if (not stream.write(rs::u32(millis()))) {
+                    if (not stream.write(kf::u32(millis()))) {
                         return {BridgeError::InstructionArgumentWriteFail};
                     }
 
                     return {};
-                })},
+                })
+        },
         send_log{
-            sender.createInstruction<rs::str, rs::size>(
-                [](bytelang::core::OutputStream &stream, const char *buffer, size_t size) -> BridgeResult {
-                    if (not stream.write(rs::u16(size))) {
+            sender.createInstruction<kf::slice<char>>(
+                [](bytelang::core::OutputStream &stream, kf::slice<char> buffer) -> BridgeResult {
+                    if (not stream.write(static_cast<kf::u8>(buffer.size))) {
                         return {BridgeError::InstructionArgumentWriteFail};
                     }
 
-                    if (not stream.write(buffer, size)) {
+                    if (not stream.write(buffer.ptr, buffer.size)) {
                         return {BridgeError::InstructionArgumentWriteFail};
                     }
 
                     return {};
-                })} {}
+                })
+        } {}
 
     /// @brief Получить таблицу инструкций приёма
     /// @return Таблица инструкций на приём

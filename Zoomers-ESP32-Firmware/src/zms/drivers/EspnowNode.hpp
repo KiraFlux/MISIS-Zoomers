@@ -13,6 +13,7 @@ struct EspnowNode {
 public:
     /// @brief Настройки узла
     struct Settings {
+
         /// @brief MAC-Адрес пульта
         kf::espnow::Mac remote_controller_mac;
     };
@@ -23,7 +24,7 @@ private:
 
 public:
     /// @brief Обработчик входящего пакета от пульта
-    std::function<void(const void *, rs::u8)> on_receive{nullptr};
+    std::function<void(kf::slice<const void>)> on_receive{nullptr};
 
     explicit EspnowNode(const Settings &settings) :
         settings{settings} {}
@@ -40,23 +41,26 @@ public:
         }
 
         const auto init_result = kf::espnow::Protocol::init();
-        if (init_result.fail()) {
-            kf_Logger_error(rs::toString(init_result.error));
+        if (not init_result.isOk()) {
+            kf_Logger_error(kf::espnow::stringFromError(init_result.error().value()));
             return false;
         }
 
         const auto peer_result = kf::espnow::Peer::add(settings.remote_controller_mac);
-        if (peer_result.fail()) {
-            kf_Logger_error(rs::toString(peer_result.error));
+        if (not peer_result.isOk()) {
+            kf_Logger_error(kf::espnow::stringFromError(init_result.error().value()));
             return false;
         }
 
-        auto receive_handler = [this](const kf::espnow::Mac &mac, const void *data, rs::u8 len) {
-            if (this->on_receive and mac == this->settings.remote_controller_mac) { this->on_receive(data, len); }
+        auto receive_handler = [this](const kf::espnow::Mac &mac, kf::slice<const void> source) {
+            if (on_receive and mac == settings.remote_controller_mac) {
+                on_receive(source);
+            }
         };
+
         const auto handler_result = kf::espnow::Protocol::instance().setReceiveHandler(receive_handler);
-        if (handler_result.fail()) {
-            kf_Logger_error(rs::toString(handler_result.error));
+        if (not handler_result.isOk()) {
+            kf_Logger_error(kf::espnow::stringFromError(init_result.error().value()));
             return false;
         }
 
@@ -65,13 +69,13 @@ public:
     }
 
     /// @brief Отправить пакет данных на пульт
-    template<typename T> [[nodiscard]] inline rs::Result<void, kf::espnow::Error> send(const T &value) {
+    template<typename T> [[nodiscard]] inline kf::Result<void, kf::espnow::Error> send(const T &value) {
         return kf::espnow::Protocol::send(settings.remote_controller_mac, value);
     }
 
     /// @brief Отправить буфер на пульт
-    [[nodiscard]] inline rs::Result<void, kf::espnow::Error> send(const void *data, rs::u8 size) {
-        return kf::espnow::Protocol::send(settings.remote_controller_mac, data, size);
+    [[nodiscard]] inline kf::Result<void, kf::espnow::Error> send(kf::slice<const void> source) {
+        return kf::espnow::Protocol::send(settings.remote_controller_mac, source);
     }
 };
 

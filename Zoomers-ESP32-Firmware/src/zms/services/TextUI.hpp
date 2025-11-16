@@ -20,7 +20,7 @@ namespace zms {
 struct TextUI final {
 
     /// @brief Обработчик отправки TUI
-    std::function<bool(const kf::tui::TextStream::Slice &)> send_handler{nullptr};
+    std::function<bool(kf::slice<const char>)> send_handler{nullptr};
 
 private:
     /// @brief Страница управления хранилищем настроек
@@ -58,6 +58,7 @@ public:
     /// @param event
     void addEvent(kf::tui::Event event) {
         auto &page_manager = kf::tui::PageManager::instance();
+
         page_manager.addEvent(event);
     }
 
@@ -82,7 +83,7 @@ public:
             return;
         }
 
-        kf_Logger_debug("%d bytes send", slice.len);
+        kf_Logger_debug("%d bytes send", slice.size);
     }
 
 private:

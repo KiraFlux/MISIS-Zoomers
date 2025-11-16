@@ -57,7 +57,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
             kf_Validator_check(validator, right_motor.isValid());
 
             //
-            kf_Validator_check(validator, manipulator.isValid());
+//            kf_Validator_check(validator, manipulator.isValid());
 
             // encoders
             kf_Validator_check(validator, encoder_conversion.isValid());
@@ -118,7 +118,12 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
             }
         }
 
-        if (not storage.settings.isValid()) { return false; }
+        if (not storage.settings.isValid()) {
+            storage.erase();
+            return false;
+        }
+
+        if (not manipulator.init()) { return false; }
 
         if (not left_motor.init()) { return false; }
         if (not right_motor.init()) { return false; }

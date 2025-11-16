@@ -53,7 +53,7 @@ public:
                 disconnected = true;
                 resetControlPacket();
 
-                if (disconnect_handler) disconnect_handler();
+                if (disconnect_handler) { disconnect_handler(); }
             }
         } else {
             disconnected = false;
