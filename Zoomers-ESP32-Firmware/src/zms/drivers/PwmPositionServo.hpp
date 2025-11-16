@@ -29,7 +29,7 @@ struct PwmPositionServo {
         }
     };
 
-    struct DriverSettings : kf::tools::Validable<PwmSettings> {
+    struct DriverSettings : kf::tools::Validable<DriverSettings> {
         kf::u8 signal_pin;
         kf::u8 ledc_channel;
 
@@ -45,7 +45,7 @@ struct PwmPositionServo {
         }
     };
 
-    struct PulseSettings : kf::tools::Validable<PwmSettings> {
+    struct PulseSettings : kf::tools::Validable<PulseSettings> {
         struct Pulse {
             kf::Microseconds pulse;
             kf::Degrees angle;
