@@ -1,6 +1,6 @@
-[submodule "Zoomers-ESP32-Firmware/KiraFlux-TUI"]
-	path = Zoomers-ESP32-Firmware/lib/KiraFlux-TUI
-	url = https://github.com/KiraFlux/KiraFlux-TUI.git
+[submodule "Zoomers-ESP32-Firmware/KiraFlux-UI"]
+	path = Zoomers-ESP32-Firmware/lib/KiraFlux-UI
+	url = https://github.com/KiraFlux/KiraFlux-UI.git
 [submodule "Zoomers-ESP32-Firmware/lib/ByteLang-Bridge"]
 	path = Zoomers-ESP32-Firmware/lib/ByteLang-Bridge
 	url = https://github.com/KiraFlux/ByteLang-Bridge.git
