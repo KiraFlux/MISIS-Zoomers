@@ -10,10 +10,10 @@ namespace zms {
 struct ByteLangBridgeProtocol final {
 
     /// @brief Ошибка исполнения инструкции моста
-    using BridgeError = bytelang::bridge::Error;
+    using Error = bytelang::bridge::Error;
 
     /// @brief Результат исполнения инструкции моста
-    using BridgeResult = kf::Result<void, BridgeError>;
+    using BridgeResult = kf::Result<void, Error>;
 
     /// @brief Специализация отправителя
     using Sender = bytelang::bridge::Sender<kf::u8>;
@@ -61,7 +61,7 @@ private:
             sender.createInstruction(
                 [](bytelang::core::OutputStream &stream) -> BridgeResult {
                     if (not stream.write(kf::u32(millis()))) {
-                        return {BridgeError::InstructionArgumentWriteFail};
+                        return {Error::InstructionArgumentWriteFail};
                     }
 
                     return {};
@@ -71,11 +71,11 @@ private:
             sender.createInstruction<const kf::slice<const char> &>(
                 [](bytelang::core::OutputStream &stream, const kf::slice<const char> &buffer) -> BridgeResult {
                     if (not stream.write(static_cast<kf::u8>(buffer.size))) {
-                        return {BridgeError::InstructionArgumentWriteFail};
+                        return {Error::InstructionArgumentWriteFail};
                     }
 
                     if (not stream.write(buffer.ptr, buffer.size)) {
-                        return {BridgeError::InstructionArgumentWriteFail};
+                        return {Error::InstructionArgumentWriteFail};
                     }
 
                     return {};
