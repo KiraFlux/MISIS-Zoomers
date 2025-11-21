@@ -19,7 +19,7 @@ class SerialStream(InputStream, OutputStream):
         self.port: Final = port
         self._baud = baud
 
-        self._serial_port = SerialPort(port=self.port, baudrate=self._baud, timeout=None)
+        self._serial_port = SerialPort(port=self.port, baudrate=self._baud, timeout=0.1)
         self._connected = True
 
     def read(self, size: int) -> bytes:
@@ -57,7 +57,13 @@ class SerialStream(InputStream, OutputStream):
         self._serial_port = SerialPort(port=port or self.port, baudrate=self._baud, timeout=None)
         self._connected = True
 
+        self.reset()
+
         self._serial_port.read(self._serial_port.in_waiting)
+
+    def reset(self):
+        self._serial_port.reset_input_buffer()
+        self._serial_port.reset_output_buffer()
 
     @staticmethod
     def search_ports(exclude: Sequence[str] = ("COM1",)) -> Sequence[str]:

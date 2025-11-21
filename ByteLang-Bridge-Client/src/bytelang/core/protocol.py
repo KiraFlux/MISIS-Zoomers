@@ -70,11 +70,12 @@ class Protocol:
         code_size = self._remote_instruction_code.size
         code = self._input_stream.read(code_size)
 
+        if not code or len(code) < code_size:
+            return
+
         if code not in self._receive_handlers:
-            print(f"Unknown instruction code: {code.hex()}")
             return
 
         instruction, handler = self._receive_handlers[code]
         args_result = instruction.receive(self._input_stream)
-
         handler(args_result)

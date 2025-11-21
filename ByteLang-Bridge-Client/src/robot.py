@@ -14,13 +14,13 @@ from bytelang.impl.serializer.primitive import u32
 from bytelang.impl.serializer.primitive import u8
 from bytelang.impl.serializer.struct_ import StructSerializer
 from bytelang.impl.serializer.void import VoidSerializer
-from bytelang.impl.stream.serials import SecureSerialStream
+from bytelang.impl.stream.serials import SerialStream
 
 
 class Robot(Protocol):
 
     def __init__(self) -> None:
-        self._serial: Final = SecureSerialStream(self._get_serial_port(), 115200)
+        self._serial: Final = SerialStream(self._get_serial_port(), 115200)
 
         super().__init__(self._serial, self._serial, u8, u8)
 
@@ -98,6 +98,9 @@ class Robot(Protocol):
         """Запустить задачу опроса порта"""
         self.poll_task.start()
 
+    def reset_buffers(self):
+        self._serial.reset()
+
     def _poll(self) -> None:
         while True:
             try:
@@ -118,7 +121,7 @@ class Robot(Protocol):
         while True:
             ports = tuple(
                 p
-                for p in SecureSerialStream.search_ports()
+                for p in SerialStream.search_ports()
                 if "USB" in p or "COM" in p and "COM1" not in p
             )
 

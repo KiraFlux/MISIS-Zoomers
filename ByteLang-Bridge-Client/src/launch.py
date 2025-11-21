@@ -7,22 +7,21 @@ def _launch():
     robot = Robot()
     robot.start_poll_task()
 
-    # Даем время на синхронизацию
-    print("Waiting for sync...")
-    time.sleep(3)
+    time.sleep(1)
+    robot.send_millis_request(None)
+    time.sleep(1)
 
-    print("Sending millis requests...")
-    for i in range(5):
-        robot.send_millis_request(None)
+    for i in range(10):
+        robot.control_manipulator(0.0, 1.0)
         time.sleep(1)
 
-    # Ждем ответы
-    time.sleep(2)
+        robot.control_manipulator(1.0, 0.0)
+        time.sleep(1)
+
     robot.control_manipulator(None, None)
 
-    print("Test completed")
-
-    robot.poll_task.join()
+    time.sleep(2)
+    print("Done")
 
 
 if __name__ == '__main__':
