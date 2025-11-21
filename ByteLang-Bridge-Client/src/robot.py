@@ -9,16 +9,18 @@ from bytelang.core.protocol import Protocol
 from bytelang.impl.serializer.bytevector import ByteVectorSerializer
 from bytelang.impl.serializer.primitive import i16
 from bytelang.impl.serializer.primitive import i8
-from bytelang.impl.serializer.primitive import u8, f32, u32, u16
+from bytelang.impl.serializer.primitive import u16
+from bytelang.impl.serializer.primitive import u32
+from bytelang.impl.serializer.primitive import u8
 from bytelang.impl.serializer.struct_ import StructSerializer
 from bytelang.impl.serializer.void import VoidSerializer
-from bytelang.impl.stream.serials import SerialStream
+from bytelang.impl.stream.serials import SecureSerialStream
 
 
 class Robot(Protocol):
 
     def __init__(self) -> None:
-        self._serial: Final = SerialStream(self._get_serial_port(), 115200)
+        self._serial: Final = SecureSerialStream(self._get_serial_port(), 115200)
 
         super().__init__(self._serial, self._serial, u8, u8)
 
@@ -116,8 +118,8 @@ class Robot(Protocol):
         while True:
             ports = tuple(
                 p
-                for p in SerialStream.search_ports()
-                if "USB" in p
+                for p in SecureSerialStream.search_ports()
+                if "USB" in p or "COM" in p and "COM1" not in p
             )
 
             if ports:

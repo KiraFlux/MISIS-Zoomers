@@ -4,18 +4,25 @@
 #include "zms/Periphery.hpp"
 #include "zms/Service.hpp"
 
+
 static auto &periphery = zms::Periphery::instance();
 
 static auto &service = zms::Service::instance();
 
 void setup() {
+    Serial.setDebugOutput(false);
+    Serial.setRxBufferSize(1024);
+    Serial.setTxBufferSize(1024);
+    Serial.setTimeout(10);
     Serial.begin(115200);
+
+    delay(1000);
 
     kf_Logger_setWriter([](const kf::slice<const char> &str) {
         service.bytelang_bridge.send_log(str);
     });
 
-    kf_Logger_info("begin");
+    kf_Logger_info("START");
 
     const bool periphery_ok = periphery.init();
 

@@ -1,6 +1,3 @@
-"""
-Точка входа
-"""
 import time
 
 from robot import Robot
@@ -10,32 +7,22 @@ def _launch():
     robot = Robot()
     robot.start_poll_task()
 
+    # Даем время на синхронизацию
+    print("Waiting for sync...")
+    time.sleep(3)
+
+    print("Sending millis requests...")
+    for i in range(5):
+        robot.send_millis_request(None)
+        time.sleep(1)
+
+    # Ждем ответы
     time.sleep(2)
+    robot.control_manipulator(None, None)
 
-    for i in range(-100, 101, 4):
-        p = 1 - abs(i) / 100
-        print(p)
+    print("Test completed")
 
-        robot.set_motors(p, -p)
-        time.sleep(0.02)
-
-    for i in range(-100, 101, 2):
-        p = 1 - abs(i) / 100
-        print(p)
-
-        robot.set_motors(-p, p)
-        time.sleep(0.02)
-
-    for i in range(-100, 101, 4):
-        p = 1 - abs(i) / 100
-        print(p)
-
-        robot.set_motors(p, -p)
-        time.sleep(0.02)
-
-    robot.set_motors(0, 0)
-
-    robot.poll_task.join(1)
+    robot.poll_task.join()
 
 
 if __name__ == '__main__':
