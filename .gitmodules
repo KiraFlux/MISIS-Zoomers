@@ -10,3 +10,6 @@
 [submodule "Zoomers-ESP32-Firmware/lib/KiraFlux-ToolBox"]
 	path = Zoomers-ESP32-Firmware/lib/KiraFlux-ToolBox
 	url = https://github.com/KiraFlux/KiraFlux-ToolBox.git
+[submodule "Zoomers-ESP32-Firmware/lib/KiraFlux-UI"]
+	path = Zoomers-ESP32-Firmware/lib/KiraFlux-UI
+	url = https://github.com/KiraFlux/KiraFlux-UI
