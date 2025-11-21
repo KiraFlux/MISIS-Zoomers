@@ -12,7 +12,21 @@ def _launch():
 
     time.sleep(2)
 
-    for i in range(-100, 101, 1):
+    for i in range(-100, 101, 4):
+        p = 1 - abs(i) / 100
+        print(p)
+
+        robot.set_motors(p, -p)
+        time.sleep(0.02)
+
+    for i in range(-100, 101, 2):
+        p = 1 - abs(i) / 100
+        print(p)
+
+        robot.set_motors(-p, p)
+        time.sleep(0.02)
+
+    for i in range(-100, 101, 4):
         p = 1 - abs(i) / 100
         print(p)
 
