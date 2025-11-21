@@ -7,6 +7,8 @@ from serial import SerialException
 
 from bytelang.core.protocol import Protocol
 from bytelang.impl.serializer.bytevector import ByteVectorSerializer
+from bytelang.impl.serializer.primitive import i16
+from bytelang.impl.serializer.primitive import i8
 from bytelang.impl.serializer.primitive import u8, f32, u32, u16
 from bytelang.impl.serializer.struct_ import StructSerializer
 from bytelang.impl.serializer.void import VoidSerializer
@@ -24,11 +26,15 @@ class Robot(Protocol):
 
         self.send_millis_request = self.add_sender(VoidSerializer(), "send_millis_request")
         self._set_manipulator = self.add_sender(StructSerializer((u8, u8)), "set_manipulator")
+        self.send_distances_request = self.add_sender(VoidSerializer(), "send_distances")
+        self._set_motors = self.add_sender(StructSerializer((i16, i16)), "set_motors")
 
         # receivers
 
         self.add_receiver(u32, self._on_millis)
         self.add_receiver(ByteVectorSerializer(u16), self._on_log)
+        self.add_receiver(StructSerializer((u16, u16)), self._on_distances)
+        self.add_receiver(StructSerializer((i8, i8)), self._on_encoders)
 
         #
 
@@ -39,6 +45,27 @@ class Robot(Protocol):
         self.log("Receivers: \n" + "\n".join(map(str, self.get_receivers())))
 
         self.poll_task = Thread(target=self._poll, daemon=True)
+
+    def set_motors(self, left: float, right: float) -> None:
+        """
+        Установить скорости моторов
+        :param left: Скорость левого
+        :param right: Скорость правого
+        """
+
+        def _norm(__v: float) -> int:
+            a = 1000
+            return min(a, max(-a, int(__v * a)))
+
+        self._set_motors((_norm(left), _norm(right)))
+
+    def _on_encoders(self, v) -> None:
+        self.log(v)
+        return
+
+    def _on_distances(self, v) -> None:
+        self.log(v)
+        return
 
     def control_manipulator(self, /, arm: Optional[float] = None, claw: Optional[float] = None) -> None:
         """

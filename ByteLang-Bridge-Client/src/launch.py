@@ -10,25 +10,18 @@ def _launch():
     robot = Robot()
     robot.start_poll_task()
 
-    time.sleep(1)
+    time.sleep(2)
 
-    for i in range(1):
+    for i in range(-100, 101, 1):
+        p = 1 - abs(i) / 100
+        print(p)
 
-        robot.control_manipulator(0, 1)
-        time.sleep(1)
+        robot.set_motors(p, -p)
+        time.sleep(0.02)
 
-        robot.control_manipulator(0, 0)
-        time.sleep(1)
+    robot.set_motors(0, 0)
 
-        robot.control_manipulator(1, 0)
-        time.sleep(1)
-
-        robot.control_manipulator(0, 0)
-        time.sleep(1)
-
-    robot.control_manipulator(None, None)
-
-    robot.poll_task.join(1.0)
+    robot.poll_task.join(1)
 
 
 if __name__ == '__main__':

@@ -201,7 +201,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
             .left_encoder = {
                 .phase_a = static_cast<kf::u8>(GPIO_NUM_32),
                 .phase_b = static_cast<kf::u8>(GPIO_NUM_33),
-                .edge = Encoder::PinsSettings::Edge::Rising,
+                .edge = Encoder::PinsSettings::Edge::Falling,
             },
             .right_encoder = {
                 .phase_a = static_cast<kf::u8>(GPIO_NUM_25),
