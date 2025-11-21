@@ -1,6 +1,7 @@
 from threading import Thread
 from time import sleep
 from typing import Final
+from typing import Optional
 
 from serial import SerialException
 
@@ -22,7 +23,7 @@ class Robot(Protocol):
         # senders
 
         self.send_millis_request = self.add_sender(VoidSerializer(), "send_millis_request")
-        self.set_manipulator = self.add_sender(StructSerializer((u8, u8)), "set_manipulator")
+        self._set_manipulator = self.add_sender(StructSerializer((u8, u8)), "set_manipulator")
 
         # receivers
 
@@ -38,6 +39,26 @@ class Robot(Protocol):
         self.log("Receivers: \n" + "\n".join(map(str, self.get_receivers())))
 
         self.poll_task = Thread(target=self._poll, daemon=True)
+
+    def control_manipulator(self, /, arm: Optional[float] = None, claw: Optional[float] = None) -> None:
+        """
+        Управлять манипулятором
+        :param arm: Звено [0..1]
+        :param claw: Захват [0..1]
+        """
+
+        def _normalize(__v: Optional[float], __min: int, __max: int) -> int:
+            if __v is None:
+                return 0xff
+
+            __v = min(1.0, max(0.0, __v))
+
+            return int(__v * (__max - __min)) + __min
+
+        self._set_manipulator((
+            _normalize(arm, 180, 90),
+            _normalize(claw, 0, 180),
+        ))
 
     @staticmethod
     def log(message: str) -> None:
