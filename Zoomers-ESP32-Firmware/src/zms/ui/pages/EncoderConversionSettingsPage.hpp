@@ -1,17 +1,18 @@
 #pragma once
 
-#include <kf/tui.hpp>
+#include <kf/UI.hpp>
 
 #include "zms/drivers/Encoder.hpp"
 #include "zms/ui/pages/MainPage.hpp"
 
+
 namespace zms {
 
 /// @brief Страница настроек преобразований энкодера
-struct EncoderConversionSettingsPage final : kf::tui::Page {
+struct EncoderConversionSettingsPage final : kf::UI::Page {
 
     explicit EncoderConversionSettingsPage(Encoder::ConversionSettings &settings) :
-        kf::tui::Page{"Enc Conversion"} {
+        Page{"Enc Conversion"} {
         link(MainPage::instance());
     }
 };

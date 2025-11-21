@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kf/tui.hpp>
+#include <kf/UI.hpp>
 
 #include "zms/Periphery.hpp"
 #include "zms/ui/pages/MainPage.hpp"
@@ -9,33 +9,32 @@
 namespace zms {
 
 /// @brief Страница управления хранилищем настроек
-struct StoragePage final : kf::tui::Page {
+struct StoragePage final : kf::UI::Page {
 
 private:
-    /// Сохранить настройки
-    kf::tui::Button save;
 
-    /// Загрузить настройки
-    kf::tui::Button load;
+    /// @brief Сохранить настройки
+    kf::UI::Button save;
 
-    /// Восстановить значения по умолчанию
-    kf::tui::Button restore_defaults;
+    /// @brief Загрузить настройки
+    kf::UI::Button load;
+
+    /// @brief Восстановить значения по умолчанию
+    kf::UI::Button restore_defaults;
 
 public:
     explicit StoragePage(Periphery &periphery) :
         Page{"Storage"},
-        save{"Save", [&periphery]() { periphery.storage.save(); }},
-        load{"Load", [&periphery]() { periphery.storage.load(); }},
+        save{*this, "Save", [&periphery]() { periphery.storage.save(); }},
+        load{*this, "Load", [&periphery]() { periphery.storage.load(); }},
         restore_defaults{
+            *this,
             "Restore", [&periphery]() {
                 periphery.storage.settings = Periphery::defaultSettings();
                 periphery.storage.save();
             }
         } {
         link(MainPage::instance());
-        add(save);
-        add(load);
-        add(restore_defaults);
     }
 };
 

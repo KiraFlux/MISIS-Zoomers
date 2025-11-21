@@ -28,7 +28,7 @@ struct Service final : kf::tools::Singleton<Service> {
     void init() {
         static auto &periphery = zms::Periphery::instance();
 
-        periphery.espnow_node.on_receive = [this](kf::slice<const void> data) {
+        periphery.espnow_peer.value().setReceiveHandler([this](kf::slice<const void> data) {
             /// Действие в меню
             enum Action : kf::u8 {
                 None = 0x00,
@@ -41,7 +41,7 @@ struct Service final : kf::tools::Singleton<Service> {
             };
 
             auto translateActionToEvent = [](Action code) {
-                using kf::tui::Event;
+                using Event = kf::UI::Event;
 
                 switch (code) {
                     case Action::Reload: return Event::Update;
@@ -66,7 +66,7 @@ struct Service final : kf::tools::Singleton<Service> {
 
                 default: kf_Logger_warn("Unknown packet: (%d bytes)", data.size);
             }
-        };
+        });
 
         dual_joystick_remote_controller.control_handler = [](const DualJoystickRemoteController::ControlPacket &packet) {
             periphery.left_motor.set(packet.left_y + packet.left_x);
@@ -83,8 +83,8 @@ struct Service final : kf::tools::Singleton<Service> {
             periphery.manipulator.disable();
         };
 
-        text_ui.send_handler = [](kf::slice<const char> slice) -> bool {
-            const auto send_result = periphery.espnow_node.send(
+        text_ui.send_handler = [](kf::slice<const kf::u8> slice) -> bool {
+            const auto send_result = periphery.espnow_peer.value().sendBuffer(
                 kf::slice<const void>{
                     slice.ptr,
                     slice.size
@@ -92,7 +92,7 @@ struct Service final : kf::tools::Singleton<Service> {
             );
 
             if (not send_result.isOk()) {
-                kf_Logger_error("text ui send fail: %s", kf::espnow::stringFromError(send_result.error().value()));
+                kf_Logger_error("text ui send fail: %s", kf::EspNow::stringFromError(send_result.error().value()));
                 return false;
             }
 

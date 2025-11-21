@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kf/tui.hpp>
+#include <kf/UI.hpp>
 
 #include "zms/drivers/Motor.hpp"
 #include "zms/ui/pages/MainPage.hpp"
@@ -9,9 +9,9 @@
 namespace zms {
 
 /// @brief Страница настроек ШИМ
-struct MotorPwmSettingsPage final : kf::tui::Page {
+struct MotorPwmSettingsPage final : kf::UI::Page {
     explicit MotorPwmSettingsPage(Motor::PwmSettings &settings) :
-        kf::tui::Page{"Motor PWM"} {
+        Page{"Motor PWM"} {
         link(MainPage::instance());
     }
 };

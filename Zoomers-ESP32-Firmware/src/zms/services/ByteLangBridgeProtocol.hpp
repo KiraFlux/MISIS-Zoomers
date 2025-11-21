@@ -35,7 +35,7 @@ public:
     bytelang::bridge::Instruction <Sender::Code> send_millis;
 
     /// @brief (...) -> send_log() -> u8[u8]
-    bytelang::bridge::Instruction <Sender::Code, kf::slice<char>> send_log;
+    bytelang::bridge::Instruction<Sender::Code, const kf::slice<const char> &> send_log;
 
     //
 
@@ -68,8 +68,8 @@ private:
                 })
         },
         send_log{
-            sender.createInstruction<kf::slice<char>>(
-                [](bytelang::core::OutputStream &stream, kf::slice<char> buffer) -> BridgeResult {
+            sender.createInstruction<const kf::slice<const char> &>(
+                [](bytelang::core::OutputStream &stream, const kf::slice<const char> &buffer) -> BridgeResult {
                     if (not stream.write(static_cast<kf::u8>(buffer.size))) {
                         return {BridgeError::InstructionArgumentWriteFail};
                     }

@@ -1,53 +1,62 @@
 #pragma once
 
 #include <kf/Logger.hpp>
-#include <kf/tui.hpp>
+#include <kf/UI.hpp>
 
 #include "zms/drivers/Encoder.hpp"
 #include "zms/ui/pages/MainPage.hpp"
 
+
 namespace zms {
 
 /// @brief Страница индивидуальных настроек энкодера
-struct EncoderTunePage final : kf::tui::Page {
+struct EncoderTunePage final : kf::UI::Page {
 
 private:
-    using TicksDisplay = kf::tui::Labeled<kf::tui::Display<Encoder::Ticks>>;
+    using TicksDisplay = kf::UI::Labeled<kf::UI::Display<Encoder::Ticks>>;
     TicksDisplay ticks_display;
 
-    kf::tui::Labeled<kf::tui::CheckBox> enabled;
+    kf::UI::Labeled<kf::UI::CheckBox> enabled;
 
-    kf::tui::ComboBox<Encoder::PinsSettings::Edge, 2> edge;
+    kf::UI::ComboBox<Encoder::PinsSettings::Edge, 2> edge;
 
 public:
     explicit EncoderTunePage(
         const char *encoder_name,
         Encoder &encoder,
-        Encoder::PinsSettings &settings) :
-        kf::tui::Page{encoder_name},
+        Encoder::PinsSettings &settings
+    ) :
+        kf::UI::Page{encoder_name},
         ticks_display{
+            *this,
             "Pos",
-            TicksDisplay::Content{encoder.position}},
+            TicksDisplay::Impl{*this, encoder.position}
+        },
         enabled{
+            *this,
             "Enabled",
-            kf::tui::CheckBox{[&encoder, encoder_name](bool e) {
-                kf_Logger_info("%s: %s", encoder_name, e ? "Enabled" : "Disabled");
-                if (e) {
-                    encoder.enable();
-                } else {
-                    encoder.disable();
+            kf::UI::CheckBox{
+                [&encoder, encoder_name](bool e) {
+                    kf_Logger_info("%s: %s", encoder_name, e ? "Enabled" : "Disabled");
+                    if (e) {
+                        encoder.enable();
+                    } else {
+                        encoder.disable();
+                    }
                 }
-            }}},
+            }
+        },
         edge{
-            {{
-                {"Rising", Encoder::PinsSettings::Edge::Rising},
-                {"Falling", Encoder::PinsSettings::Edge::Falling},
-            }},
-            settings.edge} {
+            *this,
+            {
+                {
+                    {"Rising", Encoder::PinsSettings::Edge::Rising},
+                    {"Falling", Encoder::PinsSettings::Edge::Falling},
+                }
+            },
+            settings.edge
+        } {
         link(MainPage::instance());
-        add(ticks_display);
-        add(enabled);
-        add(edge);
     }
 };
 

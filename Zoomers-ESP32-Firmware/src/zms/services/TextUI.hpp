@@ -2,12 +2,11 @@
 
 #include <functional>
 #include <kf/Logger.hpp>
-#include <kf/tui.hpp>
+#include <kf/UI.hpp>
 
 #include "zms/Periphery.hpp"
 #include "zms/ui/pages/EncoderConversionSettingsPage.hpp"
 #include "zms/ui/pages/EncoderTunePage.hpp"
-#include "zms/ui/pages/EspnowNodeSettingsPage.hpp"
 #include "zms/ui/pages/MainPage.hpp"
 #include "zms/ui/pages/MotorPwmSettingsPage.hpp"
 #include "zms/ui/pages/MotorTunePage.hpp"
@@ -19,8 +18,8 @@ namespace zms {
 /// @brief ZMS Text UI
 struct TextUI final {
 
-    /// @brief Обработчик отправки TUI
-    std::function<bool(kf::slice<const char>)> send_handler{nullptr};
+    /// @brief Обработчик отправки UI
+    std::function<bool(kf::slice<const kf::u8>)> send_handler{nullptr};
 
 private:
     /// @brief Страница управления хранилищем настроек
@@ -44,11 +43,6 @@ private:
 
     //
 
-    /// @brief Страница настройки узла Espnow
-    EspnowNodeSettingsPage espnow_node_settings_page;
-
-    //
-
 public:
     /// @brief Публичный конструктор для сервиса
     explicit TextUI() :
@@ -56,22 +50,22 @@ public:
 
     /// @brief Добавить событие в очередь
     /// @param event
-    void addEvent(kf::tui::Event event) {
-        auto &page_manager = kf::tui::PageManager::instance();
+    void addEvent(kf::UI::Event event) {
+        auto &page_manager = kf::UI::instance();
 
         page_manager.addEvent(event);
     }
 
     /// @brief Опрос событий
     void poll() const {
-        auto &page_manager = kf::tui::PageManager::instance();
+        auto &page_manager = kf::UI::instance();
         const bool update_required = page_manager.pollEvents();
 
         if (not update_required) { return; }
 
         const auto slice = page_manager.render();
 
-        if (not send_handler) {
+        if (nullptr == send_handler) {
             kf_Logger_warn("sender is null");
             return;
         }
@@ -123,13 +117,9 @@ private:
 
         encoder_conversion_settings_page{
             p.storage.settings.encoder_conversion
-        },
-
-        espnow_node_settings_page{
-            p.storage.settings.espnow_node
         } {
 
-        kf::tui::PageManager::instance().bind(MainPage::instance());
+        kf::UI::instance().bind(MainPage::instance());
     }
 };
 

@@ -1,11 +1,12 @@
 #pragma once
 
-#include <kf/tools/Storage.hpp>
 #include <kf/tools/validation.hpp>
 #include <kf/tools/meta/Singleton.hpp>
+#include <kf/tools/Storage.hpp>
+#include <kf/EspNow.hpp>
+#include <kf/Option.hpp>
 
 #include "zms/drivers/Encoder.hpp"
-#include "zms/drivers/EspnowNode.hpp"
 #include "zms/drivers/Motor.hpp"
 #include "zms/drivers/Sharp.hpp"
 #include "zms/drivers/Manipulator2DOF.hpp"
@@ -48,7 +49,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         // Софт
 
         /// @brief Настройки узла Espnow
-        EspnowNode::Settings espnow_node;
+        kf::EspNow::Mac espnow_mac;
 
         void check(kf::tools::Validator &validator) const {
             // motors
@@ -105,7 +106,7 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
     //
 
     /// @brief Узел протокола Espnow
-    EspnowNode espnow_node{storage.settings.espnow_node};
+    kf::Option<kf::EspNow::Peer> espnow_peer{};
 
     /// @brief Инициализировать всю периферию
     [[nodiscard]] bool init() {
@@ -134,7 +135,11 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
         left_encoder.init();
         right_encoder.init();
 
-        if (not espnow_node.init()) { return false; }
+        auto peer_init = initEspnowPeer();
+        if (peer_init.hasValue()) {
+            kf_Logger_error(kf::EspNow::stringFromError(peer_init.value()));
+            return false;
+        }
 
         return true;
     }
@@ -211,11 +216,25 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                 .pin = static_cast<kf::u8>(GPIO_NUM_35),
                 .resolution = 10,
             },
-            .espnow_node = {
-                .remote_controller_mac = {0x78, 0x1c, 0x3c, 0xa4, 0x96, 0xdc},
+            .espnow_mac = {
+                {0x78, 0x1c, 0x3c, 0xa4, 0x96, 0xdc},
             }
         };
         return default_settings;
+    }
+
+private:
+
+    [[nodiscard]] kf::Option<kf::EspNow::Error> initEspnowPeer() {
+        const auto init_result = kf::EspNow::init();
+        if (not init_result.isOk()) { return init_result.error(); }
+
+        const auto peer_result = kf::EspNow::Peer::add(storage.settings.espnow_mac);
+        if (not peer_result.isOk()) { return peer_result.error(); }
+
+        espnow_peer = peer_result.ok();
+
+        return {};
     }
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <kf/tui.hpp>
+#include <kf/UI.hpp>
 #include <kf/aliases.hpp>
 
 #include "zms/drivers/Motor.hpp"
@@ -10,46 +10,46 @@
 namespace zms {
 
 /// @brief Страница настройки мотора
-struct MotorTunePage final : kf::tui::Page {
+struct MotorTunePage final : kf::UI::Page {
 
     /// @brief Кнопка установки данного значение ШИМ как порог включения
-    kf::tui::Button set_current_pwm_as_dead_zone;
+    kf::UI::Button set_current_pwm_as_dead_zone;
 
     /// @brief Кнопка вызова процедуры инициализации управляемого мотора
-    kf::tui::Button init;
+    kf::UI::Button init;
 
     // Управление ШИМ
 
-    using PwmInput = kf::tui::Labeled<kf::tui::SpinBox<Motor::SignedPwm>>;
+    using PwmInput = kf::UI::Labeled<kf::UI::SpinBox<Motor::SignedPwm>>;
 
     /// @brief Ввод ШИМ
     PwmInput pwm_input;
 
     /// @brief Значение ШИМ для установки
-    PwmInput::Content::Scalar pwm_set{0};
+    PwmInput::Impl::Scalar pwm_set{0};
 
     // Управление значением управления
 
-    using NormalizedInput = kf::tui::Labeled<kf::tui::SpinBox<kf::f32>>;
+    using NormalizedInput = kf::UI::Labeled<kf::UI::SpinBox<kf::f32>>;
 
     /// @brief Ввод нормализованного значения управления мотором
     NormalizedInput normalized_input;
 
     /// @brief Значение управления для установки
-    NormalizedInput::Content::Scalar normalized_value_set{0.0f};
+    NormalizedInput::Impl::Scalar normalized_value_set{0.0f};
 
     // Управление настройками драйвера
 
-    using FrequencyInput = kf::tui::Labeled<kf::tui::SpinBox<Motor::PwmSettings::FrequencyScalar>>;
+    using FrequencyInput = kf::UI::Labeled<kf::UI::SpinBox<Motor::PwmSettings::FrequencyScalar>>;
 
     /// @brief Ввод частоты ШИМ
     FrequencyInput frequency_input;
 
     /// @brief Направление движения
-    kf::tui::ComboBox<Motor::Direction, 2> direction;
+    kf::UI::ComboBox<Motor::Direction, 2> direction;
 
     /// @brief Активная реализация драйвера
-    kf::tui::ComboBox<Motor::DriverImpl, 2> driver_impl;
+    kf::UI::ComboBox<Motor::DriverImpl, 2> driver_impl;
 
     explicit MotorTunePage(
         const char *motor_name,
@@ -60,6 +60,7 @@ struct MotorTunePage final : kf::tui::Page {
         Page{motor_name},
 
         set_current_pwm_as_dead_zone{
+            *this,
             "Set DeadZone",
             [this, &pwm_settings]() {
                 pwm_settings.dead_zone = pwm_set;
@@ -67,6 +68,7 @@ struct MotorTunePage final : kf::tui::Page {
         },
 
         init{
+            *this,
             "Re-Init",
             [&motor]() {
                 if (not motor.init()) {
@@ -75,25 +77,29 @@ struct MotorTunePage final : kf::tui::Page {
             }
         },
         pwm_input{
+            *this,
             "PWM",
-            PwmInput::Content{pwm_set}
+            PwmInput::Impl{pwm_set}
         },
         normalized_input{
+            *this,
             "Norm",
-            NormalizedInput::Content{
+            NormalizedInput::Impl{
                 normalized_value_set, 0.1f
             }
         },
         frequency_input{
+            *this,
             "Hz",
-            FrequencyInput::Content{
+            FrequencyInput::Impl{
                 pwm_settings.ledc_frequency_hz,
                 1000,
-                FrequencyInput::Content::Mode::ArithmeticPositiveOnly
+                FrequencyInput::Impl::Mode::ArithmeticPositiveOnly
             }
         },
 
         direction{
+            *this,
             {
                 {
                     {"CW", Motor::Direction::CW},
@@ -104,6 +110,7 @@ struct MotorTunePage final : kf::tui::Page {
         },
 
         driver_impl{
+            *this,
             {
                 {
                     {"IArduino", Motor::DriverImpl::IArduino},
@@ -113,16 +120,6 @@ struct MotorTunePage final : kf::tui::Page {
             driver_settings.impl
         } {
         link(MainPage::instance());
-
-        add(pwm_input);
-        add(set_current_pwm_as_dead_zone);
-
-        add(normalized_input);
-        add(direction);
-
-        add(init);
-        add(frequency_input);
-        add(driver_impl);
     }
 };
 

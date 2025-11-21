@@ -12,7 +12,7 @@ static auto &service = zms::Service::instance();
 void setup() {
     Serial.begin(115200);
 
-    kf_Logger_setWriter([](kf::slice<char> str) {
+    kf_Logger_setWriter([](const kf::slice<const char> &str) {
         service.bytelang_bridge.send_log(str);
     });
 
