@@ -1,10 +1,9 @@
 #pragma once
 
-#include <kf/units.hpp>
 #include <kf/tools/validation.hpp>
+#include <kf/units.hpp>
 
 #include "zms/drivers/PwmPositionServo.hpp"
-
 
 namespace zms {
 
@@ -69,10 +68,9 @@ public:
 
     inline void setClaw(kf::Degrees angle) { claw_axis.set(angle); }
 
-    void disable() {
-        arm_axis.disable();
-        claw_axis.disable();
-    }
+    inline void disableArm() { arm_axis.disable(); }
+
+    inline void disableClaw() { claw_axis.disable(); }
 };
 
 }// namespace zms

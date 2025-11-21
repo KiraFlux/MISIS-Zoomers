@@ -1,13 +1,12 @@
 #pragma once
 
-#include <kf/tools/meta/Singleton.hpp>
 #include <kf/aliases.hpp>
+#include <kf/tools/meta/Singleton.hpp>
 
 #include "zms/Periphery.hpp"
 #include "zms/services/ByteLangBridgeProtocol.hpp"
 #include "zms/services/DualJoystickRemoteController.hpp"
 #include "zms/services/TextUI.hpp"
-
 
 namespace zms {
 
@@ -80,16 +79,15 @@ struct Service final : kf::tools::Singleton<Service> {
             periphery.left_motor.stop();
             periphery.right_motor.stop();
 
-            periphery.manipulator.disable();
+            periphery.manipulator.disableArm();
+            periphery.manipulator.disableClaw();
         };
 
         text_ui.send_handler = [](kf::slice<const kf::u8> slice) -> bool {
             const auto send_result = periphery.espnow_peer.value().sendBuffer(
                 kf::slice<const void>{
                     slice.ptr,
-                    slice.size
-                }
-            );
+                    slice.size});
 
             if (not send_result.isOk()) {
                 kf_Logger_error("text ui send fail: %s", kf::EspNow::stringFromError(send_result.error().value()));

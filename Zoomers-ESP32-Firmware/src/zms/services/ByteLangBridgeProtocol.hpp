@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <bytelang/bridge.hpp>
 
-
 namespace zms {
 
 /// @brief Протокол ByteLang Моста
@@ -19,7 +18,7 @@ struct ByteLangBridgeProtocol final {
     using Sender = bytelang::bridge::Sender<kf::u8>;
 
     /// @brief Специализация приёмника
-    using Receiver = bytelang::bridge::Receiver<kf::u8, 1>;
+    using Receiver = bytelang::bridge::Receiver<kf::u8, 2>;
 
 private:
     /// @brief Экземпляр отправителя для создания инструкций
@@ -31,13 +30,11 @@ private:
 public:
     // Инструкции отправки
 
-    /// @brief send_millis() -> u32
-    bytelang::bridge::Instruction <Sender::Code> send_millis;
+    /// @brief 0x00 send_millis() -> u32
+    bytelang::bridge::Instruction<Sender::Code> send_millis;
 
-    /// @brief (...) -> send_log() -> u8[u8]
+    /// @brief 0x01 (...) -> send_log() -> u8[u8]
     bytelang::bridge::Instruction<Sender::Code, const kf::slice<const char> &> send_log;
-
-    //
 
     /// @brief Публичный конструктор для сервиса
     explicit ByteLangBridgeProtocol() :
@@ -65,8 +62,7 @@ private:
                     }
 
                     return {};
-                })
-        },
+                })},
         send_log{
             sender.createInstruction<const kf::slice<const char> &>(
                 [](bytelang::core::OutputStream &stream, const kf::slice<const char> &buffer) -> BridgeResult {
@@ -79,8 +75,7 @@ private:
                     }
 
                     return {};
-                })
-        } {}
+                })} {}
 
     /// @brief Получить таблицу инструкций приёма
     /// @return Таблица инструкций на приём
@@ -92,6 +87,36 @@ private:
             [this](bytelang::core::InputStream &stream) -> BridgeResult {
                 return send_millis();
             },
+
+            // 0x01
+            // set_manipulator(arm: u8, claw: u8)
+            // Устанавливает манипулятор в положение
+            // Значение 0xff выключает ось
+            [](bytelang::core::InputStream &stream) -> BridgeResult {
+                auto arm = stream.readByte();
+                if (not arm.hasValue()) { return Error::InstructionArgumentReadFail; }
+
+                auto claw = stream.readByte();
+                if (not claw.hasValue()) { return Error::InstructionArgumentReadFail; }
+
+                const auto disabled = 0xFF;
+
+                auto &manipulator = Periphery::instance().manipulator;
+
+                if (disabled == arm.value()) {
+                    manipulator.disableArm();
+                } else {
+                    manipulator.setArm(arm.value());
+                }
+
+                if (disabled == claw.value()) {
+                    manipulator.disableClaw();
+                } else {
+                    manipulator.setClaw(claw.value());
+                }
+
+                return {};
+            }
 
             //
         };

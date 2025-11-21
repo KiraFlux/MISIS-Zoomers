@@ -19,13 +19,17 @@ class Robot(Protocol):
 
         super().__init__(self._serial, self._serial, u8, u8)
 
+        # senders
+
         self.send_millis_request = self.add_sender(VoidSerializer(), "send_millis_request")
-        self.execute_task = self.add_sender(StructSerializer((u8, f32)), "execute_task")
-        self.set_speed = self.add_sender(f32, "set_speed")
+        self.set_manipulator = self.add_sender(StructSerializer((u8, u8)), "set_manipulator")
+
+        # receivers
 
         self.add_receiver(u32, self._on_millis)
         self.add_receiver(ByteVectorSerializer(u16), self._on_log)
-        self.add_receiver(u32, self._on_task_completed, "on_task_completed")
+
+        #
 
         self._task_completed: bool = True
         self._task_result: int = 0
@@ -34,28 +38,6 @@ class Robot(Protocol):
         self.log("Receivers: \n" + "\n".join(map(str, self.get_receivers())))
 
         self.poll_task = Thread(target=self._poll, daemon=True)
-
-    def go_dist(self, mm: float) -> None:
-        """
-        Прямолинейное перемещение
-        :param:
-        """
-        self._send_task_and_wait(0x01, mm)
-
-    def check_magnetometer(self) -> int:
-        """
-        Сделать проверку ряда магнитометром
-        :returns: кол-во найденных магнитов в ряду
-        """
-        self._send_task_and_wait(0x03, 0.0)
-        return self._task_result
-
-    def turn(self, turns: float) -> None:
-        """
-        Разворот на месте
-        :param: turns кол-во оборотов. Положительный угол - поворот по часовой
-        """
-        self._send_task_and_wait(0x02, turns)
 
     @staticmethod
     def log(message: str) -> None:
@@ -103,19 +85,3 @@ class Robot(Protocol):
     def _on_log(self, data: bytes) -> None:
         log = data.decode(errors="replace").strip('\n')
         self.log(f"ESP: {log}")
-
-    def _on_task_completed(self, result: int) -> None:
-        self._task_completed = True
-        self._task_result = result
-        self.log(f"task completed: {result=}")
-
-    def _send_task_and_wait(self, task_code: int, arg: float) -> None:
-        self.log(f"Выполнение задачи: {task_code=} {arg=}")
-
-        self._task_completed = False
-        self.execute_task((task_code, arg))
-
-        while not self._task_completed:
-            sleep(0.01)
-
-        self.log(f"Задача : {task_code=} {arg=} выполнена {self._task_result=}")
