@@ -209,11 +209,11 @@ struct Periphery final : kf::tools::Singleton<Periphery> {
                 .edge = Encoder::PinsSettings::Edge::Falling,
             },
             .left_distance_sensor = {
-                .pin = static_cast<kf::u8>(GPIO_NUM_34),
+                .pin = static_cast<kf::u8>(GPIO_NUM_35),
                 .resolution = 10,
             },
             .right_distance_sensor = {
-                .pin = static_cast<kf::u8>(GPIO_NUM_35),
+                .pin = static_cast<kf::u8>(GPIO_NUM_34),
                 .resolution = 10,
             },
             .espnow_mac = {
